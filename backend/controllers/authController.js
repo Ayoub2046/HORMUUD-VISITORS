@@ -8,7 +8,7 @@ exports.login = async (req, res) => {
   const { email, password } = req.body;
 
   if (!email || !password) {
-    return res.status(400).json({ success: false, message: 'Fadlan geli email iyo password.' });
+    return res.status(400).json({ success: false, message: 'Please enter email and password.' });
   }
 
   try {
@@ -56,7 +56,7 @@ exports.login = async (req, res) => {
 
   } catch (error) {
     console.error('Error logging in:', error);
-    res.status(500).json({ success: false, message: 'Cilad farsamo ayaa ka dhacday server-ka.' });
+    res.status(500).json({ success: false, message: 'A server error occurred.' });
   }
 };
 
@@ -79,7 +79,7 @@ exports.register = async (req, res) => {
   const { full_name, email, phone, address, password } = req.body;
 
   if (!full_name || !email || !phone || !address || !password) {
-    return res.status(400).json({ success: false, message: 'Fadlan buuxi dhamaan meelaha daruuriga ah (magac, email, telefoon, cinwaan, password).' });
+    return res.status(400).json({ success: false, message: 'Please fill all required fields (name, email, phone, address, password).' });
   }
 
   let normalizedPhone = phone.trim().replace(/\s/g, '');
@@ -88,7 +88,7 @@ exports.register = async (req, res) => {
   } else if (/^\d{9}$/.test(normalizedPhone)) {
     normalizedPhone = '+252' + normalizedPhone;
   } else if (!/^\+?252\d{7,9}$/.test(normalizedPhone)) {
-    return res.status(400).json({ success: false, message: 'Fadlan geli telefoon sax ah (tusaale: +25261XXXXXXX ama 0615XXXXXXX).' });
+    return res.status(400).json({ success: false, message: 'Please enter a valid phone number (e.g. +25261XXXXXXX or 0615XXXXXXX).' });
   }
   if (!normalizedPhone.startsWith('+')) {
     normalizedPhone = '+' + normalizedPhone;
@@ -134,13 +134,13 @@ exports.register = async (req, res) => {
 
     res.status(201).json({ 
       success: true, 
-      message: 'Koontada waa la abuuray. Fadlan geli koodhka laguugu soo diray telefoonkaaga si aad u xaqiijiso.',
+      message: 'Account created. Please enter the code sent to your phone to verify.',
       user_id: newUser.id 
     });
 
   } catch (error) {
     console.error('Error in registration:', error);
-    res.status(500).json({ success: false, message: 'Cilad farsamo ayaa ka dhacday diiwaangelinta.' });
+    res.status(500).json({ success: false, message: 'A server error occurred during registration.' });
   }
 };
 
@@ -148,7 +148,7 @@ exports.verifyOTP = async (req, res) => {
   const { phone, otp_code } = req.body;
 
   if (!phone || !otp_code) {
-    return res.status(400).json({ success: false, message: 'Fadlan geli telefoonka iyo koodhka.' });
+    return res.status(400).json({ success: false, message: 'Please enter phone and code.' });
   }
 
   try {
@@ -159,7 +159,7 @@ exports.verifyOTP = async (req, res) => {
     }
 
     if (new Date(otpRecord.expires_at) < new Date()) {
-      return res.status(400).json({ success: false, message: 'Koodhkani wuu dhacay. Fadlan dalbo mid cusub.' });
+      return res.status(400).json({ success: false, message: 'This code has expired. Please request a new one.' });
     }
 
     // Mark OTP as used
@@ -178,13 +178,13 @@ exports.verifyOTP = async (req, res) => {
 
   } catch (error) {
     console.error('Error verifying OTP:', error);
-    res.status(500).json({ success: false, message: 'Cilad farsamo ayaa ka dhacday xaqiijinta.' });
+    res.status(500).json({ success: false, message: 'A server error occurred during verification.' });
   }
 };
 
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
-  if (!email) return res.status(400).json({ success: false, message: 'Fadlan geli email-kaaga.' });
+  if (!email) return res.status(400).json({ success: false, message: 'Please enter your email.' });
 
   try {
     const user = await db.users.findOne({ email: email.toLowerCase() });
@@ -209,7 +209,7 @@ exports.forgotPassword = async (req, res) => {
 
   } catch (error) {
     console.error('Error in forgotPassword:', error);
-    res.status(500).json({ success: false, message: 'Cilad farsamo ayaa ka dhacday.' });
+    res.status(500).json({ success: false, message: 'A server error occurred.' });
   }
 };
 
@@ -217,12 +217,12 @@ exports.resetPassword = async (req, res) => {
   const { email, reset_code, new_password } = req.body;
 
   if (!email || !reset_code || !new_password) {
-    return res.status(400).json({ success: false, message: 'Fadlan buuxi dhammaan meelaha.' });
+    return res.status(400).json({ success: false, message: 'Please fill all fields.' });
   }
 
   try {
     const user = await db.users.findOne({ email: email.toLowerCase() });
-    if (!user) return res.status(404).json({ success: false, message: 'User-ka lama helin.' });
+    if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
 
     const resetRecord = await db.passwordResets.findOne({ reset_token: reset_code });
     
@@ -231,7 +231,7 @@ exports.resetPassword = async (req, res) => {
     }
 
     if (new Date(resetRecord.expires_at) < new Date()) {
-      return res.status(400).json({ success: false, message: 'Koodhkani wuu dhacay. Fadlan dalbo mid cusub.' });
+      return res.status(400).json({ success: false, message: 'This code has expired. Please request a new one.' });
     }
 
     // Mark as used
@@ -255,7 +255,7 @@ exports.resetPassword = async (req, res) => {
 
   } catch (error) {
     console.error('Error in resetPassword:', error);
-    res.status(500).json({ success: false, message: 'Cilad farsamo ayaa ka dhacday bedelka password-ka.' });
+    res.status(500).json({ success: false, message: 'A server error occurred while updating password.' });
   }
 };
 
@@ -263,7 +263,7 @@ exports.updatePassword = async (req, res) => {
   const { currentPassword, newPassword } = req.body;
 
   if (!currentPassword || !newPassword) {
-    return res.status(400).json({ success: false, message: 'Fadlan geli password-ka hadda iyo kan cusub.' });
+    return res.status(400).json({ success: false, message: 'Please enter the current and new password.' });
   }
   if (newPassword.length < 6) {
     return res.status(400).json({ success: false, message: 'Password-ku waa inuu ugu yaraan 6 xaraf yahay.' });
@@ -272,7 +272,7 @@ exports.updatePassword = async (req, res) => {
   try {
     const user = await db.users.findOne({ id: req.user.id });
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User-ka lama helin.' });
+      return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
     const isValid = bcrypt.compareSync(currentPassword, user.password_hash);
@@ -293,7 +293,7 @@ exports.updatePassword = async (req, res) => {
     res.status(200).json({ success: true, message: 'Password-kaaga si guul leh ayaa loo bedelay.' });
   } catch (error) {
     console.error('Error updating password:', error);
-    res.status(500).json({ success: false, message: 'Cilad farsamo ayaa ka dhacday bedelka password-ka.' });
+    res.status(500).json({ success: false, message: 'A server error occurred while updating password.' });
   }
 };
 

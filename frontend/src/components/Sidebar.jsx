@@ -33,8 +33,11 @@ export default function Sidebar({ activePage, setActivePage, isOpen, onClose }) 
           <div className="nav flex-column gap-1">
             {navItem('dashboard', 'bi bi-grid-1x2-fill', t('nav.dashboard'))}
             {navItem('tasks', 'bi bi-check2-square', t('nav.tasks'))}
+            {navItem('clients', 'bi bi-people-fill', 'Clients')}
+            {navItem('visit-tasks', 'bi bi-journal-text', 'Visit Tasks')}
             {navItem('visits', 'bi bi-list-check', t('nav.visits'))}
             {user.role === 'marketing' && navItem('add-visit', 'bi bi-plus-circle-fill', t('nav.addVisit'))}
+            {navItem('assignments', 'bi bi-send-fill', 'Assignments')}
           </div>
         </div>
 
@@ -42,8 +45,10 @@ export default function Sidebar({ activePage, setActivePage, isOpen, onClose }) 
           <div>
             <div className="sidebar-section-label">{t('nav.admin')}</div>
             <div className="nav flex-column gap-1">
-              {navItem('users', 'bi bi-people-fill', t('nav.users'))}
+              {navItem('users', 'bi bi-person-badge-fill', t('nav.users'))}
+              {navItem('isps', 'bi bi-wifi', 'ISP Management')}
               {navItem('reports', 'bi bi-file-earmark-bar-graph-fill', t('nav.reports'))}
+              {navItem('recycle-bin', 'bi bi-trash3-fill', 'Recycle Bin')}
             </div>
           </div>
         )}

@@ -7,7 +7,7 @@ exports.getUsers = async (req, res) => {
     res.status(200).json({ success: true, data: users });
   } catch (error) {
     console.error('Error fetching users:', error);
-    res.status(500).json({ success: false, message: 'Fashil baa ku yimid soo akhrinta users.' });
+    res.status(500).json({ success: false, message: 'Failed to fetch users.' });
   }
 };
 
@@ -15,13 +15,13 @@ exports.getUserById = async (req, res) => {
   try {
     const user = await db.users.findOne({ id: req.params.id });
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User-ka lama helin.' });
+      return res.status(404).json({ success: false, message: 'User not found.' });
     }
     const { password_hash, ...userDetails } = user;
     res.status(200).json({ success: true, data: userDetails });
   } catch (error) {
     console.error('Error fetching user:', error);
-    res.status(500).json({ success: false, message: 'Fashil baa ku yimid soo akhrinta user-ka.' });
+    res.status(500).json({ success: false, message: 'Failed to fetch user.' });
   }
 };
 
@@ -29,7 +29,7 @@ exports.createUser = async (req, res) => {
   const { full_name, email, phone, address, role, department, password } = req.body;
 
   if (!full_name || !email || !phone || !address || !password) {
-    return res.status(400).json({ success: false, message: 'Fadlan buuxi Magaca, Email-ka, Telefoonka, Cinwaanka, iyo Password-ka.' });
+    return res.status(400).json({ success: false, message: 'Please fill Name, Email, Phone, Address, and Password.' });
   }
 
   let normalizedPhone = phone.trim().replace(/\s/g, '');
@@ -38,7 +38,7 @@ exports.createUser = async (req, res) => {
   } else if (/^\d{9}$/.test(normalizedPhone)) {
     normalizedPhone = '+252' + normalizedPhone;
   } else if (!/^\+?252\d{7,9}$/.test(normalizedPhone)) {
-    return res.status(400).json({ success: false, message: 'Fadlan geli telefoon sax ah (tusaale: +25261XXXXXXX ama 0615XXXXXXX).' });
+    return res.status(400).json({ success: false, message: 'Please enter a valid phone number (e.g. +25261XXXXXXX or 0615XXXXXXX).' });
   }
   if (!normalizedPhone.startsWith('+')) {
     normalizedPhone = '+' + normalizedPhone;
@@ -47,7 +47,7 @@ exports.createUser = async (req, res) => {
   try {
     const existingUser = await db.users.findOne({ email: email.trim().toLowerCase() });
     if (existingUser) {
-      return res.status(400).json({ success: false, message: 'Email-kan mar hore ayaa la diiwaangeliyey.' });
+      return res.status(400).json({ success: false, message: 'This email is already registered.' });
     }
 
     const password_hash = bcrypt.hashSync(password, 10);
@@ -68,10 +68,10 @@ exports.createUser = async (req, res) => {
       description: `Created user ${full_name} (${email}) as ${role}`
     });
 
-    res.status(201).json({ success: true, message: 'User-ka si guul leh ayaa loo diiwaangeliyey.', data: newUser });
+    res.status(201).json({ success: true, message: 'User registered successfully.', data: newUser });
   } catch (error) {
     console.error('Error creating user:', error);
-    res.status(500).json({ success: false, message: 'Waa la awoodi waayey in la abuuro user-ka.' });
+    res.status(500).json({ success: false, message: 'Failed to create user.' });
   }
 };
 
@@ -86,7 +86,7 @@ exports.updateUser = async (req, res) => {
 
     const user = await db.users.findOne({ id: userId });
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User-ka lama helin.' });
+      return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
     const updatedUser = await db.users.update(userId, updates);
@@ -97,10 +97,10 @@ exports.updateUser = async (req, res) => {
       description: `Updated user info for ${user.full_name}`
     });
 
-    res.status(200).json({ success: true, message: 'User-ka si guul leh ayaa loo cusbooneysiiyey.', data: updatedUser });
+    res.status(200).json({ success: true, message: 'User updated successfully.', data: updatedUser });
   } catch (error) {
     console.error('Error updating user:', error);
-    res.status(500).json({ success: false, message: 'Fashil baa ku yimid cusbooneysiinta user-ka.' });
+    res.status(500).json({ success: false, message: 'Failed to update user.' });
   }
 };
 
@@ -110,12 +110,12 @@ exports.deleteUser = async (req, res) => {
     
     // Prevent self-deletion
     if (userId === req.user.id) {
-      return res.status(400).json({ success: false, message: 'Uma awoodid inaad is-tirto naftaada.' });
+      return res.status(400).json({ success: false, message: 'You cannot delete yourself.' });
     }
 
     const user = await db.users.findOne({ id: userId });
     if (!user) {
-      return res.status(404).json({ success: false, message: 'User-ka lama helin.' });
+      return res.status(404).json({ success: false, message: 'User not found.' });
     }
 
     await db.users.delete(userId);
@@ -126,9 +126,9 @@ exports.deleteUser = async (req, res) => {
       description: `Deleted user ${user.full_name} (${user.email})`
     });
 
-    res.status(200).json({ success: true, message: 'User-ka si guul leh ayaa loo tiray.' });
+    res.status(200).json({ success: true, message: 'User deleted successfully.' });
   } catch (error) {
     console.error('Error deleting user:', error);
-    res.status(500).json({ success: false, message: 'Fashil baa ku yimid tirista user-ka.' });
+    res.status(500).json({ success: false, message: 'Failed to delete user.' });
   }
 };

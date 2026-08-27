@@ -11,7 +11,8 @@
     "admin": "Admin",
     "account": "Account",
     "addVisit": "Log Visit",
-    "tasks": "Daily Tasks"
+    "tasks": "Daily Tasks",
+    "clients": "Clients"
   },
   "roles": {
     "admin": "Administrator",

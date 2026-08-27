@@ -10,11 +10,18 @@ import Users from './pages/Users';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import Tasks from './pages/Tasks';
+import Clients from './pages/Clients';
+import ClientDetail from './pages/ClientDetail';
+import Isps from './pages/Isps';
+import MyAssignments from './pages/MyAssignments';
+import VisitTasks from './pages/VisitTasks';
+import RecycleBin from './pages/RecycleBin';
 import AppFooter from './components/AppFooter';
 
 export default function App() {
   const { user, loading } = useAuth();
   const [activePage, setActivePage] = useState('dashboard');
+  const [clientId, setClientId] = useState(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [theme, setTheme] = useState('dark');
 
@@ -33,6 +40,7 @@ export default function App() {
 
   const handlePageChange = (page) => {
     setActivePage(page);
+    if (page !== 'clientDetail') setClientId(null);
     setSidebarOpen(false);
   };
 
@@ -59,6 +67,12 @@ export default function App() {
       case 'users': return user.role === 'admin' ? <Users /> : <Dashboard setActivePage={handlePageChange} />;
       case 'reports': return user.role === 'admin' ? <Reports /> : <Dashboard setActivePage={handlePageChange} />;
       case 'tasks': return <Tasks />;
+      case 'clients': return <Clients setActivePage={handlePageChange} setClientId={setClientId} />;
+      case 'clientDetail': return <ClientDetail clientId={clientId} setActivePage={handlePageChange} setClientId={setClientId} />;
+      case 'assignments': return <MyAssignments setActivePage={handlePageChange} setClientId={setClientId} />;
+      case 'visit-tasks': return <VisitTasks setActivePage={handlePageChange} />;
+      case 'recycle-bin': return user.role === 'admin' ? <RecycleBin /> : <Dashboard setActivePage={handlePageChange} />;
+      case 'isps': return user.role === 'admin' ? <Isps /> : <Dashboard setActivePage={handlePageChange} />;
       case 'settings': return <Settings />;
       default: return <Dashboard setActivePage={handlePageChange} />;
     }

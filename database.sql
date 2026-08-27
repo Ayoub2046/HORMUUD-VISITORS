@@ -139,3 +139,125 @@ create index if not exists idx_pwd_resets_token on password_resets(reset_token);
 
 -- Migration: add address column to existing installations
 alter table users add column if not exists address text;
+
+-- --------------------------------------------------------------------------
+-- 7. TASKS TABLE
+-- --------------------------------------------------------------------------
+create table if not exists tasks (
+  id uuid default uuid_generate_v4() primary key,
+  assigned_by uuid references users(id) on delete set null,
+  assigned_to uuid references users(id) on delete set null,
+  service text not null,
+  description text,
+  date text,
+  status text default 'pending',
+  completed_at timestamp with time zone,
+  completed_by uuid references users(id) on delete set null,
+  feedback text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create index if not exists idx_tasks_assigned_to on tasks(assigned_to);
+create index if not exists idx_tasks_date on tasks(date);
+
+-- --------------------------------------------------------------------------
+-- 8. CLIENTS TABLE
+-- --------------------------------------------------------------------------
+create table if not exists clients (
+  id uuid default uuid_generate_v4() primary key,
+  name text not null,
+  phone text,
+  contact text,
+  employees integer default 1,
+  isp text default 'HORMUUD',
+  type text default 'Enterprise',
+  services jsonb default '[]'::jsonb,
+  svc_data jsonb default '{}'::jsonb,
+  visits jsonb default '[]'::jsonb,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create index if not exists idx_clients_name on clients(name);
+
+-- --------------------------------------------------------------------------
+-- 9. ISPS TABLE
+-- --------------------------------------------------------------------------
+create table if not exists isps (
+  id uuid default uuid_generate_v4() primary key,
+  name text unique not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- --------------------------------------------------------------------------
+-- 10. ENTERPRISE & INDIVIDUAL SERVICES TABLES
+-- --------------------------------------------------------------------------
+create table if not exists ent_svcs (
+  id uuid default uuid_generate_v4() primary key,
+  name text unique not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create table if not exists ind_svcs (
+  id uuid default uuid_generate_v4() primary key,
+  name text unique not null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+-- --------------------------------------------------------------------------
+-- 11. CLIENT ASSIGNMENTS TABLE
+-- --------------------------------------------------------------------------
+create table if not exists client_assignments (
+  id uuid default uuid_generate_v4() primary key,
+  client_id uuid references clients(id) on delete cascade,
+  assigned_to jsonb default '[]'::jsonb,
+  assigned_by uuid references users(id) on delete set null,
+  type text default 'visit',
+  notes text,
+  status text default 'pending',
+  date text,
+  completed_at timestamp with time zone,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create index if not exists idx_assignments_client_id on client_assignments(client_id);
+
+-- --------------------------------------------------------------------------
+-- 12. VISIT TASKS & VISIT REPORTS TABLES
+-- --------------------------------------------------------------------------
+create table if not exists visit_tasks (
+  id uuid default uuid_generate_v4() primary key,
+  title text not null,
+  description text,
+  assigned_to jsonb default '[]'::jsonb,
+  services jsonb default '[]'::jsonb,
+  status text default 'active',
+  created_by uuid references users(id) on delete set null,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create table if not exists visit_reports (
+  id uuid default uuid_generate_v4() primary key,
+  task_id uuid references visit_tasks(id) on delete cascade,
+  submitted_by uuid references users(id) on delete set null,
+  client_name text not null,
+  client_phone text,
+  location text,
+  notes text,
+  service_data jsonb default '{}'::jsonb,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create index if not exists idx_visit_reports_task_id on visit_reports(task_id);
+
+-- --------------------------------------------------------------------------
+-- 13. RECYCLE BIN TABLE
+-- --------------------------------------------------------------------------
+create table if not exists recycle_bin (
+  id uuid default uuid_generate_v4() primary key,
+  original_id text,
+  type text not null,
+  data jsonb default '{}'::jsonb,
+  deleted_by text,
+  deleted_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+

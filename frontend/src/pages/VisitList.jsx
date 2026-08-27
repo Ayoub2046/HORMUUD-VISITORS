@@ -30,7 +30,7 @@ export default function VisitList() {
       const res = await apiRequest(`/visits?${queryParams.toString()}`);
       if (res.success) setVisits(res.data);
     } catch (error) {
-      setAlert({ type: 'danger', message: 'Fashil baa ku yimid soo akhrinta booqashooyinka.' });
+      setAlert({ type: 'danger', message: 'Failed to load visits.' });
     } finally {
       setLoading(false);
     }
@@ -51,7 +51,7 @@ export default function VisitList() {
 
   const handleExport = async (format) => {
     try {
-      setAlert({ type: 'info', message: `Lagu jiro diyaarinta warbixinta ${format.toUpperCase()}...` });
+      setAlert({ type: 'info', message: `Preparing ${format.toUpperCase()} export...` });
       const queryParams = new URLSearchParams({ status, place_type: placeType, search, startDate, endDate });
       if (user.role === 'admin' && employeeId !== 'All') queryParams.append('employee_id', employeeId);
       const response = await fetch(`${API_URL}/visits/export/${format}?${queryParams.toString()}`, {
@@ -61,11 +61,11 @@ export default function VisitList() {
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url; a.download = `booqasho_report_${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : 'csv'}`;
+      a.href = url; a.download = `visit_report_${new Date().toISOString().split('T')[0]}.${format === 'excel' ? 'xlsx' : 'csv'}`;
       document.body.appendChild(a); a.click(); a.remove(); window.URL.revokeObjectURL(url);
-      setAlert({ type: 'success', message: 'Warbixinta waa la soo degsaday si guul leh!' });
+      setAlert({ type: 'success', message: 'Report downloaded successfully!' });
     } catch (error) {
-      setAlert({ type: 'danger', message: 'Waa la awoodi waayey in la dhoofiyo warbixinta.' });
+      setAlert({ type: 'danger', message: 'Failed to export report.' });
     }
   };
 
@@ -74,24 +74,24 @@ export default function VisitList() {
       setSavingAction(true);
       const res = await apiRequest(`/visits/${id}`, { method: 'PUT', body: JSON.stringify({ status: newStatus }) });
       if (res.success) {
-        setAlert({ type: 'success', message: `Visit-ka status-kiisa waa la bedelay: ${newStatus}` });
+        setAlert({ type: 'success', message: `Visit status updated to: ${newStatus}` });
         setSelectedVisit(null); fetchVisits();
       }
     } catch (e) {
-      setAlert({ type: 'danger', message: 'Cilad baa ka dhacday bedelidda status-ka.' });
+      setAlert({ type: 'danger', message: 'Error updating visit status.' });
     } finally { setSavingAction(false); }
   };
 
   const handleDeleteVisit = async (id) => {
-    if (!window.confirm('Ma hubtaa inaad tirto booqashadan?')) return;
+    if (!window.confirm('Are you sure you want to delete this visit?')) return;
     try {
       const res = await apiRequest(`/visits/${id}`, { method: 'DELETE' });
       if (res.success) {
-        setAlert({ type: 'success', message: 'Booqashada si guul leh ayaa loo tiray.' });
+        setAlert({ type: 'success', message: 'Visit deleted successfully.' });
         setSelectedVisit(null); fetchVisits();
       }
     } catch (e) {
-      setAlert({ type: 'danger', message: 'Waa la awoodi waayey in la tiro booqashadan.' });
+      setAlert({ type: 'danger', message: 'Failed to delete visit.' });
     }
   };
 
@@ -111,25 +111,25 @@ export default function VisitList() {
           <form onSubmit={handleSearchSubmit} className="d-flex flex-column flex-sm-row gap-2 mb-3">
             <div className="input-group flex-grow-1">
               <span className="input-group-text bg-transparent"><i className="bi bi-search"></i></span>
-              <input type="text" className="form-control" placeholder="Ka raadi magaca goobta, cinwaanka..." value={search} onChange={(e) => setSearch(e.target.value)} />
+              <input type="text" className="form-control" placeholder="Search by place name, address..." value={search} onChange={(e) => setSearch(e.target.value)} />
             </div>
-            <button type="submit" className="btn btn-primary px-4 w-100 w-sm-auto">Raadi</button>
+            <button type="submit" className="btn btn-primary px-4 w-100 w-sm-auto">Search</button>
           </form>
 
           <div className="row g-3 mb-3">
             <div className="col-md-4 col-lg-2">
               <label className="form-label small fw-semibold text-body-secondary">Status</label>
               <select className="form-select form-select-sm" value={status} onChange={(e) => setStatus(e.target.value)}>
-                <option value="All">Dhamaan</option>
+                <option value="All">All</option>
                 <option value="Successful">Successful</option>
                 <option value="Failed">Failed</option>
                 <option value="Pending">Pending</option>
               </select>
             </div>
             <div className="col-md-4 col-lg-2">
-              <label className="form-label small fw-semibold text-body-secondary">Nooca Goobta</label>
+              <label className="form-label small fw-semibold text-body-secondary">Place Type</label>
               <select className="form-select form-select-sm" value={placeType} onChange={(e) => setPlaceType(e.target.value)}>
-                <option value="All">Dhamaan</option>
+                <option value="All">All</option>
                 <option value="Shop">Shop</option>
                 <option value="Business">Business</option>
                 <option value="Company">Company</option>
@@ -143,24 +143,24 @@ export default function VisitList() {
               <div className="col-md-4 col-lg-3">
                 <label className="form-label small fw-semibold text-body-secondary">Marketing Staff</label>
                 <select className="form-select form-select-sm" value={employeeId} onChange={(e) => setEmployeeId(e.target.value)}>
-                  <option value="All">Dhamaan Shaqaalaha</option>
+                  <option value="All">All Staff</option>
                   {employees.map(emp => <option key={emp.id} value={emp.id}>{emp.full_name}</option>)}
                 </select>
               </div>
             )}
             <div className="col-md-6 col-lg-2">
-              <label className="form-label small fw-semibold text-body-secondary">Laga Bilaabo</label>
+              <label className="form-label small fw-semibold text-body-secondary">From</label>
               <input type="date" className="form-control form-control-sm" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
             </div>
             <div className="col-md-6 col-lg-2">
-              <label className="form-label small fw-semibold text-body-secondary">Ilaa</label>
+              <label className="form-label small fw-semibold text-body-secondary">To</label>
               <input type="date" className="form-control form-control-sm" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
             </div>
           </div>
 
           <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center pt-3 border-top gap-3">
             <div className="text-body-secondary small">
-              Wadarta la helay: <strong className="text-body fw-bold">{visits.length}</strong> booqashooyinka
+              Total found: <strong className="text-body fw-bold">{visits.length}</strong> visits
             </div>
             <div className="d-flex flex-column flex-sm-row gap-2 w-100 w-sm-auto">
               <button onClick={() => handleExport('excel')} className="btn btn-outline-success btn-sm d-flex align-items-center justify-content-center gap-1">
@@ -180,18 +180,18 @@ export default function VisitList() {
           {loading ? (
             <div className="text-center py-5">
               <div className="spinner-border text-primary mb-2" role="status"></div>
-              <p className="text-body-secondary mb-0">Soo akhrinaya booqashooyinka...</p>
+              <p className="text-body-secondary mb-0">Loading visits...</p>
             </div>
           ) : (
             <div className="table-responsive">
               <table className="table table-hover align-middle mb-0">
                 <thead className="table-light">
                   <tr>
-                    <th className="ps-4">Goobta</th>
-                    <th className="d-none d-md-table-cell">Nooca</th>
-                    {user.role === 'admin' && <th className="d-none d-lg-table-cell">Shaqaalaha</th>}
-                    <th className="d-none d-sm-table-cell">Macaamilka</th>
-                    <th>Taariikhda</th>
+                    <th className="ps-4">Place</th>
+                    <th className="d-none d-md-table-cell">Type</th>
+                    {user.role === 'admin' && <th className="d-none d-lg-table-cell">Staff</th>}
+                    <th className="d-none d-sm-table-cell">Contact</th>
+                    <th>Date</th>
                     <th>Status</th>
                     <th className="text-center pe-4">Action</th>
                   </tr>
@@ -204,7 +204,7 @@ export default function VisitList() {
                       {user.role === 'admin' && <td className="d-none d-lg-table-cell">{v.employee_name}</td>}
                       <td className="d-none d-sm-table-cell">
                         <div className="d-flex flex-column lh-sm">
-                          <span>{v.contact_person || 'Lama buuxin'}</span>
+                          <span>{v.contact_person || 'Not provided'}</span>
                           <span className="text-body-secondary small">{v.phone}</span>
                         </div>
                       </td>
@@ -227,7 +227,7 @@ export default function VisitList() {
                   {visits.length === 0 && (
                     <tr>
                       <td colSpan={user.role === 'admin' ? 7 : 6} className="text-center py-4 text-body-secondary">
-                        Ma jiraan wax booqashooyin ah oo helay shaandheyntan.
+                        No visits match the current filters.
                       </td>
                     </tr>
                   )}
@@ -245,18 +245,18 @@ export default function VisitList() {
             <div className="modal-content shadow">
               <div className="modal-header border-bottom-0 pb-0">
                 <h5 className="modal-title fw-bold d-flex align-items-center gap-2">
-                  <i className="bi bi-geo-alt-fill text-primary"></i> Faahfaahinta Booqashada
+                  <i className="bi bi-geo-alt-fill text-primary"></i> Visit Details
                 </h5>
                 <button type="button" className="btn-close" onClick={() => setSelectedVisit(null)} disabled={savingAction}></button>
               </div>
               <div className="modal-body">
                 <div className="row g-4">
                   <div className="col-12 col-md-6">
-                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Magaca Goobta</label>
+                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Place Name</label>
                     <div className="fw-semibold text-body">{selectedVisit.place_name}</div>
                   </div>
                   <div className="col-6 col-md-3">
-                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Nooca Goobta</label>
+                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Place Type</label>
                     <div><span className="badge bg-secondary-subtle text-body-emphasis rounded-pill px-3">{selectedVisit.place_type}</span></div>
                   </div>
                   <div className="col-6 col-md-3">
@@ -265,55 +265,55 @@ export default function VisitList() {
                   </div>
 
                   <div className="col-12">
-                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Cinwaanka</label>
-                    <div className="text-body">{selectedVisit.address || 'Ma jiro cinwaan la keydiyey'}</div>
+                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Address</label>
+                    <div className="text-body">{selectedVisit.address || 'No address recorded'}</div>
                   </div>
 
                   <div className="col-6 col-md-4">
-                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Magaca Macaamilka</label>
-                    <div className="text-body">{selectedVisit.contact_person || 'Lama buuxin'}</div>
+                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Contact Name</label>
+                    <div className="text-body">{selectedVisit.contact_person || 'Not provided'}</div>
                   </div>
                   <div className="col-6 col-md-4">
-                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Telefoonka</label>
-                    <div className="text-body">{selectedVisit.phone || 'Lama buuxin'}</div>
+                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Phone</label>
+                    <div className="text-body">{selectedVisit.phone || 'Not provided'}</div>
                   </div>
                   <div className="col-12 col-md-4">
-                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Taariikhda / Saacadda</label>
+                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Date / Time</label>
                     <div className="text-body">{selectedVisit.visit_date} / {selectedVisit.visit_time}</div>
                   </div>
 
                   <div className="col-12">
-                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Diiwaangeliye (Staff)</label>
+                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Recorded By</label>
                     <div className="text-primary fw-semibold">{selectedVisit.employee_name}</div>
                   </div>
 
                   <div className="col-12">
-                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Ujeeddada Booqashada</label>
-                    <div className="p-3 bg-body-secondary rounded-3 text-body">{selectedVisit.purpose || 'Ujeeddo la\'aan'}</div>
+                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Visit Purpose</label>
+                    <div className="p-3 bg-body-secondary rounded-3 text-body">{selectedVisit.purpose || 'No purpose'}</div>
                   </div>
                   <div className="col-12">
-                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Shaqadii la Sameeyey (Activities)</label>
-                    <div className="p-3 bg-body-secondary rounded-3 text-body" style={{ whiteSpace: 'pre-wrap' }}>{selectedVisit.activities || 'Lama buuxin'}</div>
+                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Activities</label>
+                    <div className="p-3 bg-body-secondary rounded-3 text-body" style={{ whiteSpace: 'pre-wrap' }}>{selectedVisit.activities || 'Not provided'}</div>
                   </div>
                   <div className="col-12">
-                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Natiijada (Result Details)</label>
-                    <div className="p-3 bg-body-secondary rounded-3 text-body" style={{ whiteSpace: 'pre-wrap' }}>{selectedVisit.result || 'Lama sheegin'}</div>
+                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Result</label>
+                    <div className="p-3 bg-body-secondary rounded-3 text-body" style={{ whiteSpace: 'pre-wrap' }}>{selectedVisit.result || 'Not specified'}</div>
                   </div>
                   <div className="col-12">
-                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Faallo Dheeraad ah</label>
-                    <div className="p-3 bg-body-secondary rounded-3 text-body" style={{ whiteSpace: 'pre-wrap' }}>{selectedVisit.comments || 'Lama buuxin'}</div>
+                    <label className="form-label small text-body-secondary text-uppercase fw-bold mb-1">Additional Comments</label>
+                    <div className="p-3 bg-body-secondary rounded-3 text-body" style={{ whiteSpace: 'pre-wrap' }}>{selectedVisit.comments || 'Not provided'}</div>
                   </div>
                 </div>
               </div>
               <div className="modal-footer bg-body-tertiary">
-                <button type="button" className="btn btn-secondary" onClick={() => setSelectedVisit(null)} disabled={savingAction}>Xir Daaqadda</button>
+                <button type="button" className="btn btn-secondary" onClick={() => setSelectedVisit(null)} disabled={savingAction}>Close</button>
                 {user.role === 'admin' && selectedVisit.status === 'Pending' && (
                   <>
                     <button type="button" className="btn btn-danger d-flex align-items-center gap-2" onClick={() => handleAdminApproval(selectedVisit.id, 'Failed')} disabled={savingAction}>
-                      <i className="bi bi-x-circle"></i> Fashili (Fail)
+                      <i className="bi bi-x-circle"></i> Mark as Failed
                     </button>
                     <button type="button" className="btn btn-success d-flex align-items-center gap-2" onClick={() => handleAdminApproval(selectedVisit.id, 'Successful')} disabled={savingAction}>
-                      <i className="bi bi-check-circle"></i> Ansihi (Approve)
+                      <i className="bi bi-check-circle"></i> Approve
                     </button>
                   </>
                 )}

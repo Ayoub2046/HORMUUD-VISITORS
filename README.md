@@ -1,4 +1,4 @@
-# Booqasho App — Marketing Visit Management System
+# HORMUUD-VISITORS
 
 > **Booqasho** (meaning "Visit" in Somali) is a field marketing management platform by **Hormuud Telecom** that helps you track, verify, and report on every client visit your team makes.
 
@@ -78,6 +78,71 @@ Generate professional reports in **Excel** or **CSV** format with a single click
 2. Sign in with your email and password (provided by your admin)
 3. Start logging your field visits from the **Log Visit** page
 4. View your performance on the **Dashboard**
+
+---
+
+## Local Development
+
+```bash
+# Install backend + frontend dependencies
+npm install
+npm install --prefix backend
+npm install --prefix frontend
+
+# Run both servers together (backend on :5000, frontend on :5173)
+npm run dev
+```
+
+The app runs in **mock in-memory DB mode** by default when no `DATABASE_URL` is set,
+or when `USE_MOCK_DB=true`, so you can try it without PostgreSQL:
+- Admin: `admin@booqasho.com` / `admin123`
+- Marketing: `marketing@booqasho.com` / `marketing123`
+
+To connect to a real Supabase PostgreSQL database, configure `backend/.env` with a
+`DATABASE_URL` (see `backend/.env.example`).
+
+---
+
+## Deploying to Vercel (single project — frontend + backend)
+
+This repository is set up as **one Vercel project**. The Express backend runs as a
+Vercel serverless function (`api/index.js`) and the React frontend is built to static
+files that Vercel serves. Everything lives in a single deployment, and the app is a
+fully installable **PWA**.
+
+### 1. Prerequisites
+- A **Supabase** project (or any PostgreSQL host) with the schema from `database.sql`
+  applied and seeded (run `backend/seed_pg.js`).
+
+### 2. Push to GitHub & import into Vercel
+1. Create a GitHub repo and push this folder (`.env` files are git-ignored).
+2. In Vercel → **New Project** → import the repo.
+3. Vercel will detect the config automatically.
+
+### 3. Set environment variables (Vercel → Project → Settings → Environment Variables)
+Add these for the production environment:
+- `DATABASE_URL` — **PostgreSQL connection string**. For Supabase, use the
+  **transaction pooler** string, e.g. `postgresql://postgres.[ref]:[password]@aws-0-[region].pooler.supabase.com:6543/postgres?pgbouncer=true` (port `6543` is essential for serverless to avoid exhausting connections).
+- `JWT_SECRET` — a long random secret string.
+- `USE_MOCK_DB` — set to `false` (leave unset to connect to a real DB; set `true` only for demo).
+- Optional: `SUPABASE_URL`, `SUPABASE_ANON_KEY`, `SMS_API_URL`, `SMS_CLIENT_ID`, `SMS_SECRET_KEY`.
+- Optional: `FRONTEND_URL` — your exact production domain if you want strict CORS.
+
+> **Note:** Do **not** add `VITE_API_URL` from `frontend/.env` — keep it as `/api` so the
+> built frontend calls the same-origin serverless API. No change needed.
+
+### 4. Deploy
+Just push to GitHub — Vercel runs `npm run vercel-build` (builds the React app into
+`public/`) and deploys the serverless API plus static files in one shot.
+
+That's it. Your app is live at `https://your-app.vercel.app` and users can **install it**
+from the browser (it's a PWA with an app icon, service worker offline caching, and a
+standalone full-screen experience).
+
+> **Important:** the free Vercel Hobby plan restricts serverless function sizes and
+> execution timing. For guaranteed uptime on `pg` Pool connections, use Supabase's
+> transaction pooler URL (above). The app also gracefully falls back to the mock DB if
+> the database is unreachable.
 
 ---
 

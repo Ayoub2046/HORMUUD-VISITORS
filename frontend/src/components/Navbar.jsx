@@ -8,13 +8,21 @@ export default function Navbar({ activePage, toggleSidebar, theme, toggleTheme }
 
   const getPageTitle = (page) => {
     switch(page) {
-      case 'dashboard': return t('nav.dashboard');
-      case 'visits': return t('nav.visits');
-      case 'add-visit': return t('nav.visits'); // Or a specific translation
-      case 'users': return t('nav.users');
-      case 'reports': return t('nav.reports');
-      case 'settings': return t('nav.settings');
-      default: return 'Booqasho App';
+      case 'dashboard':    return t('nav.dashboard');
+      case 'visits':       return t('nav.visits');
+      case 'add-visit':    return t('nav.add_visit') || 'Add Visit';
+      case 'edit-visit':   return 'Edit Visit';
+      case 'tasks':        return t('nav.tasks') || 'Daily Tasks';
+      case 'clients':      return t('nav.clients') || 'Clients';
+      case 'client-detail':return 'Client Detail';
+      case 'assignments':  return t('nav.assignments') || 'Assignments';
+      case 'visit-tasks':  return t('nav.visit_tasks') || 'Visit Tasks';
+      case 'isps':         return t('nav.isps') || 'ISPs & Services';
+      case 'users':        return t('nav.users');
+      case 'reports':      return t('nav.reports');
+      case 'recycle-bin':  return t('nav.recycle_bin') || 'Recycle Bin';
+      case 'settings':     return t('nav.settings');
+      default:             return 'Booqasho App';
     }
   };
 

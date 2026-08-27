@@ -21,7 +21,7 @@ export default function Users() {
       const res = await apiRequest('/users');
       if (res.success) setUsers(res.data);
     } catch (e) {
-      setError('Waa la awoodi waayey in la soo akhriyo shaqaalaha.');
+      setError('Failed to load users.');
     } finally {
       setLoading(false);
     }
@@ -44,22 +44,22 @@ export default function Users() {
   };
 
   const handleDelete = async (id, name) => {
-    if (!window.confirm(`Ma hubtaa inaad tirto user-kan: ${name}? \n\nFG: Tani waxay sidoo kale tiri kartaa booqashooyinkiisa haddii uusan lahayn foreign key constraints.`)) return;
+    if (!window.confirm(`Are you sure you want to delete user: ${name}? \n\nNote: This may also delete their visits if there are no foreign key constraints.`)) return;
     try {
       const res = await apiRequest(`/users/${id}`, { method: 'DELETE' });
       if (res.success) {
-        alert('Shaqaalaha waa la tiray si guul leh.');
+        alert('User deleted successfully.');
         fetchUsers();
       }
     } catch (e) {
-      alert('Cilad baa ka dhacday tirtiridda shaqaalaha.');
+      alert('Error deleting user.');
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.full_name || !formData.email || !formData.phone || !formData.address || (!isEditing && !formData.password)) {
-      alert('Fadlan buuxi meelaha daruuriga ah (magac, email, telefoon, cinwaan, password).');
+      alert('Please fill required fields (name, email, phone, address, password).');
       return;
     }
 
@@ -79,7 +79,7 @@ export default function Users() {
         fetchUsers();
       }
     } catch (e) {
-      setModalError(e.message || 'Waa la awoodi waayey in la keydiyo xogta shaqaalaha.');
+      setModalError(e.message || 'Failed to save user data.');
     } finally {
       setSavingAction(false);
     }
@@ -89,11 +89,11 @@ export default function Users() {
     <div>
       <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-3">
         <div>
-          <h4 className="fw-bold mb-1">Maamulka Shaqaalaha</h4>
-          <p className="text-body-secondary small mb-0">Halkan waxaad ka maamuli kartaa dhamaan dadka isticmaala nidaamka.</p>
+          <h4 className="fw-bold mb-1">User Management</h4>
+          <p className="text-body-secondary small mb-0">Manage all system users here.</p>
         </div>
         <button onClick={handleOpenCreate} className="btn btn-primary d-flex align-items-center justify-content-center gap-2 shadow-sm w-100 w-sm-auto">
-          <i className="bi bi-person-plus-fill"></i> Diiwaangeli Shaqaale Cusub
+          <i className="bi bi-person-plus-fill"></i> Register New User
         </button>
       </div>
 
@@ -109,19 +109,19 @@ export default function Users() {
           {loading ? (
             <div className="text-center py-5">
               <div className="spinner-border text-primary mb-2" role="status"></div>
-              <p className="text-body-secondary mb-0">Soo akhrinaya shaqaalaha...</p>
+              <p className="text-body-secondary mb-0">Loading users...</p>
             </div>
           ) : (
             <div className="table-responsive">
               <table className="table table-hover align-middle mb-0">
                 <thead className="table-light">
                   <tr>
-                    <th className="ps-4">Magaca</th>
-                    <th className="d-none d-md-table-cell">Email-ka</th>
-                    <th className="d-none d-lg-table-cell">Telefoonka</th>
-                    <th className="d-none d-xl-table-cell">Cinwaanka</th>
-                    <th>Nooca (Role)</th>
-                    <th className="d-none d-sm-table-cell">Taariikhda</th>
+                    <th className="ps-4">Name</th>
+                    <th className="d-none d-md-table-cell">Email</th>
+                    <th className="d-none d-lg-table-cell">Phone</th>
+                    <th className="d-none d-xl-table-cell">Address</th>
+                    <th>Role</th>
+                    <th className="d-none d-sm-table-cell">Date</th>
                     <th className="text-center pe-4">Action</th>
                   </tr>
                 </thead>
@@ -156,7 +156,7 @@ export default function Users() {
                     </tr>
                   ))}
                   {users.length === 0 && (
-                    <tr><td colSpan="7" className="text-center py-4 text-body-secondary">Weli lama diiwaangelin wax shaqaale ah.</td></tr>
+                    <tr><td colSpan="7" className="text-center py-4 text-body-secondary">No users registered yet.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -171,7 +171,7 @@ export default function Users() {
           <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
             <div className="modal-content shadow border-0">
               <div className="modal-header border-bottom-0 pb-0">
-                <h5 className="modal-title fw-bold">{isEditing ? 'Wax Ka Bedel Shaqaale' : 'Diiwaangeli Shaqaale Cusub'}</h5>
+                <h5 className="modal-title fw-bold">{isEditing ? 'Edit User' : 'Register New User'}</h5>
                 <button type="button" className="btn-close" onClick={() => setShowModal(false)} disabled={savingAction}></button>
               </div>
               {modalError && (
@@ -183,38 +183,38 @@ export default function Users() {
               <form onSubmit={handleSubmit}>
                 <div className="modal-body pb-0">
                   <div className="mb-3">
-                    <label className="form-label small fw-semibold text-body-secondary">Magaca oo Buuxa *</label>
+                    <label className="form-label small fw-semibold text-body-secondary">Full Name *</label>
                     <input type="text" className="form-control" value={formData.full_name} onChange={(e) => setFormData({...formData, full_name: e.target.value})} required />
                   </div>
                   <div className="mb-3">
-                    <label className="form-label small fw-semibold text-body-secondary">Email-ka *</label>
+                    <label className="form-label small fw-semibold text-body-secondary">Email *</label>
                     <input type="email" className="form-control" value={formData.email} onChange={(e) => setFormData({...formData, email: e.target.value})} required />
                   </div>
                   <div className="mb-3">
-                    <label className="form-label small fw-semibold text-body-secondary">Telefoonka *</label>
+                    <label className="form-label small fw-semibold text-body-secondary">Phone *</label>
                     <input type="tel" className="form-control" placeholder="+25261XXXXXXX" value={formData.phone} onChange={(e) => setFormData({...formData, phone: e.target.value})} required />
-                    <small className="text-body-secondary">Telefoonkan waxaa loo isticmaalaa OTP marka password la illoobo.</small>
+                    <small className="text-body-secondary">This phone is used for OTP when password is forgotten.</small>
                   </div>
                   <div className="mb-3">
-                    <label className="form-label small fw-semibold text-body-secondary">Cinwaanka *</label>
+                    <label className="form-label small fw-semibold text-body-secondary">Address *</label>
                     <input type="text" className="form-control" placeholder="e.g., Hodan District, Mogadishu" value={formData.address} onChange={(e) => setFormData({...formData, address: e.target.value})} required />
                   </div>
                   <div className="mb-3">
-                    <label className="form-label small fw-semibold text-body-secondary">Role (Awoodda)</label>
+                    <label className="form-label small fw-semibold text-body-secondary">Role</label>
                     <select className="form-select" value={formData.role} onChange={(e) => setFormData({...formData, role: e.target.value})}>
                       <option value="marketing">Marketing User</option>
                       <option value="admin">Administrator</option>
                     </select>
                   </div>
                   <div className="mb-3">
-                    <label className="form-label small fw-semibold text-body-secondary">Password {isEditing && <span className="text-muted fw-normal">(Ku dhaaf maran haddii aadan rabin inaad bedesho)</span>}</label>
+                    <label className="form-label small fw-semibold text-body-secondary">Password {isEditing && <span className="text-muted fw-normal">(Leave empty if not changing)</span>}</label>
                     <input type="password" className="form-control" value={formData.password} onChange={(e) => setFormData({...formData, password: e.target.value})} required={!isEditing} />
                   </div>
                 </div>
                 <div className="modal-footer bg-body-tertiary border-0 mt-3 rounded-bottom">
-                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)} disabled={savingAction}>Kanoqo</button>
+                  <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)} disabled={savingAction}>Cancel</button>
                   <button type="submit" className="btn btn-primary d-flex align-items-center gap-2" disabled={savingAction}>
-                    {savingAction ? <><span className="spinner-border spinner-border-sm"></span> Keydinayaa...</> : <><i className="bi bi-save2-fill"></i> Keydi Xogta</>}
+                    {savingAction ? <><span className="spinner-border spinner-border-sm"></span> Saving...</> : <><i className="bi bi-save2-fill"></i> Save</>}
                   </button>
                 </div>
               </form>

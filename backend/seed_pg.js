@@ -67,6 +67,50 @@ async function main() {
     ];
     await pool.query(marketingQuery, marketingValues);
 
+    // Insert Default ISPs
+    console.log('🌱 Seeding ISPs...');
+    const isps = ["HORMUUD", "SOMNET", "GOLIS", "TELESOM", "AMTEL"];
+    for (const isp of isps) {
+      await pool.query("INSERT INTO isps (name) VALUES ($1) ON CONFLICT (name) DO NOTHING", [isp]);
+    }
+
+    // Insert Default Enterprise Services
+    console.log('🌱 Seeding Enterprise Services...');
+    const entSvcs = ["BankAcc","MySMS","MyExam","Land line service","ADSL Plus","Call Center","Payroll","SMS API","Merchant","MMT","FiberOptic","FTTH","WTTX","P2MP","CRPT","MURABAHA","SHORT CODE","EvcAPI"];
+    for (const svc of entSvcs) {
+      await pool.query("INSERT INTO ent_svcs (name) VALUES ($1) ON CONFLICT (name) DO NOTHING", [svc]);
+    }
+
+    // Insert Default Individual Services
+    console.log('🌱 Seeding Individual Services...');
+    const indSvcs = ["EVCPlus","Anfac","Nasiye","Caawiye","Dhigaal","Dhanbaal","Keyd","MiFi","Aqoonmaal","LTE","ADSL","Deeqtoon","Ilawadaag","Waafi"];
+    for (const svc of indSvcs) {
+      await pool.query("INSERT INTO ind_svcs (name) VALUES ($1) ON CONFLICT (name) DO NOTHING", [svc]);
+    }
+
+    // Insert Sample Client
+    console.log('🌱 Seeding Sample Client...');
+    const sampleClient = {
+      id: 'c1000000-0000-0000-0000-000000000001',
+      name: 'Tanzil Travel Agency',
+      phone: '+252619860009',
+      contact: 'BUULE CALI CABDI',
+      employees: 2,
+      isp: 'HORMUUD',
+      type: 'Enterprise',
+      services: JSON.stringify(['BankAcc', 'MySMS', 'FTTH', 'EvcAPI']),
+      svc_data: JSON.stringify({ BankAcc: { account: '110024' }, MySMS: { number: '0615111222' }, FTTH: { number: 'FTTH-8821' }, EvcAPI: { apiKey: 'KEY-9981' } }),
+      visits: JSON.stringify([
+        { id: 'v1001', agent: 'Ayaanle Mohamed', date: new Date().toISOString(), status: 'Active', notes: 'Service check completed', newServices: ['EvcAPI'], removedServices: [], serviceNumbers: { EvcAPI: 'KEY-9981' } }
+      ])
+    };
+    await pool.query(
+      `INSERT INTO clients (id, name, phone, contact, employees, isp, type, services, svc_data, visits)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
+       ON CONFLICT (id) DO NOTHING`,
+      [sampleClient.id, sampleClient.name, sampleClient.phone, sampleClient.contact, sampleClient.employees, sampleClient.isp, sampleClient.type, sampleClient.services, sampleClient.svc_data, sampleClient.visits]
+    );
+
     console.log('🎉 Seeding completed successfully!');
     console.log('👤 Admin: admin@booqasho.com / admin123');
     console.log('👤 Marketing: marketing@booqasho.com / marketing123');

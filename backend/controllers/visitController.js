@@ -22,7 +22,7 @@ exports.getVisits = async (req, res) => {
     res.status(200).json({ success: true, data: visits });
   } catch (error) {
     console.error('Error fetching visits:', error);
-    res.status(500).json({ success: false, message: 'Fashil baa ku yimid akhrinta booqashooyinka.' });
+    res.status(500).json({ success: false, message: 'Failed to fetch visits.' });
   }
 };
 
@@ -30,18 +30,18 @@ exports.getVisitById = async (req, res) => {
   try {
     const visit = await db.visits.findOne(req.params.id);
     if (!visit) {
-      return res.status(404).json({ success: false, message: 'Booqashada lama helin.' });
+      return res.status(404).json({ success: false, message: 'Visit not found.' });
     }
 
     // Role safety check
     if (req.user.role === 'marketing' && visit.user_id !== req.user.id) {
-      return res.status(403).json({ success: false, message: 'Ma heshid idan aad ku eegto booqashadan.' });
+      return res.status(403).json({ success: false, message: 'You are not authorized to view this visit.' });
     }
 
     res.status(200).json({ success: true, data: visit });
   } catch (error) {
     console.error('Error fetching visit details:', error);
-    res.status(500).json({ success: false, message: 'Cilad baa ka dhacday soo akhrinta booqashada.' });
+    res.status(500).json({ success: false, message: 'Error fetching visit details.' });
   }
 };
 
@@ -62,7 +62,7 @@ exports.createVisit = async (req, res) => {
   } = req.body;
 
   if (!place_name || !place_type) {
-    return res.status(400).json({ success: false, message: 'Fadlan geli magaca goobta iyo nooca goobta.' });
+    return res.status(400).json({ success: false, message: 'Please enter the place name and place type.' });
   }
 
   try {
@@ -90,10 +90,10 @@ exports.createVisit = async (req, res) => {
       description: `Logged visit to ${place_name} (${place_type}) with status ${status}`
     });
 
-    res.status(201).json({ success: true, message: 'Booqashada si guul leh ayaa loo diiwaangeliyey.', data: newVisit });
+    res.status(201).json({ success: true, message: 'Visit logged successfully.', data: newVisit });
   } catch (error) {
     console.error('Error creating visit:', error);
-    res.status(500).json({ success: false, message: 'Fashil baa ku yimid keydinta booqashada.' });
+    res.status(500).json({ success: false, message: 'Failed to save visit.' });
   }
 };
 
@@ -103,16 +103,16 @@ exports.updateVisit = async (req, res) => {
     const visit = await db.visits.findOne(visitId);
 
     if (!visit) {
-      return res.status(404).json({ success: false, message: 'Booqashada lama helin.' });
+      return res.status(404).json({ success: false, message: 'Visit not found.' });
     }
 
     // Role check: marketing can only update their own visits if still pending, admin can update anything
     if (req.user.role === 'marketing' && visit.user_id !== req.user.id) {
-      return res.status(403).json({ success: false, message: 'Uma haysatid ogolaansho inaad wax ka bedesho booqashadan.' });
+      return res.status(403).json({ success: false, message: 'You do not have permission to edit this visit.' });
     }
 
     if (req.user.role === 'marketing' && visit.status !== 'Pending') {
-      return res.status(400).json({ success: false, message: 'Ma bedeli kartid booqasho mar hore la hubiyey.' });
+      return res.status(400).json({ success: false, message: 'Cannot edit a visit that has already been reviewed.' });
     }
 
     const updates = { ...req.body };
@@ -129,10 +129,10 @@ exports.updateVisit = async (req, res) => {
       description: `Updated visit to ${updatedVisit.place_name} (Status: ${updatedVisit.status})`
     });
 
-    res.status(200).json({ success: true, message: 'Booqashada waa la cusbooneysiiyey.', data: updatedVisit });
+    res.status(200).json({ success: true, message: 'Visit updated successfully.', data: updatedVisit });
   } catch (error) {
     console.error('Error updating visit:', error);
-    res.status(500).json({ success: false, message: 'Fashil baa ku yimid cusbooneysiinta booqashada.' });
+    res.status(500).json({ success: false, message: 'Failed to update visit.' });
   }
 };
 
@@ -142,16 +142,16 @@ exports.deleteVisit = async (req, res) => {
     const visit = await db.visits.findOne(visitId);
 
     if (!visit) {
-      return res.status(404).json({ success: false, message: 'Booqashada lama helin.' });
+      return res.status(404).json({ success: false, message: 'Visit not found.' });
     }
 
     // Role validation
     if (req.user.role === 'marketing' && visit.user_id !== req.user.id) {
-      return res.status(403).json({ success: false, message: 'Ma tiri kartid booqashadan.' });
+      return res.status(403).json({ success: false, message: 'You cannot delete this visit.' });
     }
 
     if (req.user.role === 'marketing' && visit.status !== 'Pending') {
-      return res.status(400).json({ success: false, message: 'Uma ogola inaad tirto booqasho mar hore la ansixiyey.' });
+      return res.status(400).json({ success: false, message: 'Cannot delete a visit that has already been approved.' });
     }
 
     await db.visits.delete(visitId);
@@ -162,9 +162,9 @@ exports.deleteVisit = async (req, res) => {
       description: `Deleted visit record to ${visit.place_name}`
     });
 
-    res.status(200).json({ success: true, message: 'Booqashada si guul leh ayaa loo tiray.' });
+    res.status(200).json({ success: true, message: 'Visit deleted successfully.' });
   } catch (error) {
     console.error('Error deleting visit:', error);
-    res.status(500).json({ success: false, message: 'Cilad baa ka dhacday tirista booqashada.' });
+    res.status(500).json({ success: false, message: 'Error deleting visit.' });
   }
 };

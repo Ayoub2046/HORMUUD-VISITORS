@@ -104,7 +104,7 @@ export default function Login() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!email || !password) { setError('Fadlan buuxi email-ka iyo password-ka.'); return; }
+    if (!email || !password) { setError('Please fill in email and password.'); return; }
     try {
       setLoading(true); setError('');
       const result = await login(email, password);
@@ -217,26 +217,26 @@ export default function Login() {
               Hormuud Telecom Somalia
             </div>
             <h1 className="hero-title">
-              Nidaamka Rasmiga ah ee<br />
-              <span className="hero-title-accent">Booqashada Marketing</span>
+              The Official<br />
+              <span className="hero-title-accent">Marketing Visit System</span>
             </h1>
             <p className="hero-subtitle">
-              Diiwaangeli, Xaqiiji, oo la soco dhammaan booqashooyinka shaqaalaha suuqgeynta adoo adeegsanaya Booqasho App.
+              Record, verify, and track all field marketing visits using the Booqasho App.
             </p>
             <div className="hero-stats">
               <div className="hero-stat">
                 <span className="stat-num">{animatedVisits.toLocaleString()}+</span>
-                <span className="stat-label">Booqasho</span>
+                <span className="stat-label">Visits</span>
               </div>
               <div className="stat-divider"></div>
               <div className="hero-stat">
                 <span className="stat-num">{animatedUsers}+</span>
-                <span className="stat-label">Shaqaale</span>
+                <span className="stat-label">Staff</span>
               </div>
               <div className="stat-divider"></div>
               <div className="hero-stat">
                 <span className="stat-num">{animatedBranches}+</span>
-                <span className="stat-label">Xarumo</span>
+                <span className="stat-label">Branches</span>
               </div>
             </div>
           </div>

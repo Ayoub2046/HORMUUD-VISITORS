@@ -21,6 +21,10 @@ export default function Dashboard({ setActivePage }) {
         setStats({
           role: user?.role || 'marketing',
           summary: { totalVisits: 0, successful: 0, failed: 0, pending: 0, visitsToday: 0, successRate: 0, totalUsers: 0 },
+          clientSummary: { totalClients: 0, entCount: 0, indCount: 0, clientsNoVisits: 0, svcRanked: [] },
+          visitTaskSummary: { total: 0, active: 0, reports: 0, recentTasks: [] },
+          assignmentSummary: { total: 0, pending: 0, completed: 0, byType: { visits: 0, calls: 0 }, recent: [] },
+          recentClientVisits: [],
           placeTypeCounts: {},
           recentVisits: [],
           activeStaff: [],
@@ -177,7 +181,11 @@ export default function Dashboard({ setActivePage }) {
   }
   
   if (!stats) {
-    return null;
+    return (
+      <div className="card border-0 shadow-sm p-4 text-center">
+        <p className="text-body-secondary">No dashboard data available. Please try again.</p>
+      </div>
+    );
   }
 
   const s = stats.summary;
@@ -287,6 +295,315 @@ export default function Dashboard({ setActivePage }) {
           </div>
         </div>
       </div>
+
+      {/* Client Stats (Admin only) */}
+      {stats.role === 'admin' && stats.clientSummary && (
+        <>
+          <div className="row g-3 mb-4">
+            <div className="col-6 col-lg-3">
+              <div className="card stat-card h-100 border-0 border-start border-3 border-primary shadow-sm rounded-3" style={{ cursor: 'pointer' }}
+                onClick={() => setActivePage('clients')}>
+                <div className="card-body">
+                  <div className="d-flex justify-content-between align-items-start">
+                    <span className="stat-title">Clients</span>
+                    <div className="stat-icon-box bg-primary-subtle text-primary rounded-2"><i className="bi bi-building"></i></div>
+                  </div>
+                  <div className="stat-value mt-2">{stats.clientSummary.totalClients}</div>
+                  <div className="stat-label">Enterprise {stats.clientSummary.entCount} &middot; Individual {stats.clientSummary.indCount}</div>
+                </div>
+              </div>
+            </div>
+            <div className="col-6 col-lg-3">
+              <div className="card stat-card h-100 border-0 border-start border-3 border-success shadow-sm rounded-3">
+                <div className="card-body">
+                  <div className="d-flex justify-content-between align-items-start">
+                    <span className="stat-title">Distinct Services</span>
+                    <div className="stat-icon-box bg-success-subtle text-success rounded-2"><i className="bi bi-grid-3x3-gap-fill"></i></div>
+                  </div>
+                  <div className="stat-value mt-2">{stats.clientSummary.svcRanked?.length || 0}</div>
+                  <div className="stat-label">Top: {stats.clientSummary.svcRanked?.[0]?.[0] || '—'}</div>
+                </div>
+              </div>
+            </div>
+            <div className="col-6 col-lg-3">
+              <div className="card stat-card h-100 border-0 border-start border-3 border-warning shadow-sm rounded-3" style={{ cursor: 'pointer' }}
+                onClick={() => setActivePage('clients')}>
+                <div className="card-body">
+                  <div className="d-flex justify-content-between align-items-start">
+                    <span className="stat-title">Needs Visit</span>
+                    <div className="stat-icon-box bg-warning-subtle text-warning rounded-2"><i className="bi bi-exclamation-triangle-fill"></i></div>
+                  </div>
+                  <div className="stat-value mt-2 text-warning">{stats.clientSummary.clientsNoVisits}</div>
+                  <div className="stat-label">Needs attention</div>
+                </div>
+              </div>
+            </div>
+            <div className="col-6 col-lg-3">
+              <div className="card stat-card h-100 border-0 border-start border-3 border-info shadow-sm rounded-3" style={{ cursor: 'pointer' }}
+                onClick={() => setActivePage('clients')}>
+                <div className="card-body">
+                  <div className="d-flex justify-content-between align-items-start">
+                    <span className="stat-title">Enterprise</span>
+                    <div className="stat-icon-box bg-info-subtle text-info rounded-2"><i className="bi bi-pie-chart-fill"></i></div>
+                  </div>
+                  <div className="stat-value mt-2">{stats.clientSummary.entCount}</div>
+                  <div className="stat-label">Individual: {stats.clientSummary.indCount}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Service Usage & No-Visit Alert */}
+          <div className="row g-3 mb-4">
+            <div className="col-lg-7">
+              <div className="card border-0 shadow-sm rounded-4 h-100">
+                <div className="card-body p-4">
+                  <h6 className="fw-bold mb-3"><i className="bi bi-grid-3x3-gap-fill me-2"></i>Services — Client Usage</h6>
+                  {stats.clientSummary.svcRanked?.length > 0 ? (
+                    <div className="d-flex flex-column gap-2">
+                      {stats.clientSummary.svcRanked.map(([s, n]) => {
+                        const maxVal = stats.clientSummary.svcRanked[0][1];
+                        return (
+                          <div key={s} className="d-flex align-items-center gap-2">
+                            <span className="small text-truncate" style={{ width: '110px', flexShrink: 0, textAlign: 'right', fontWeight: 600 }}>{s}</span>
+                            <div className="flex-grow-1" style={{ background: '#F0F4F8', borderRadius: '4px', height: '20px', overflow: 'hidden' }}>
+                              <div style={{ width: `${(n / maxVal) * 100}%`, height: '100%', background: '#0066CC', borderRadius: '4px', display: 'flex', alignItems: 'center', paddingLeft: '6px' }}>
+                                {n > 0 && <span className="small text-white fw-bold">{n}</span>}
+                              </div>
+                            </div>
+                            <span className="small text-body-secondary" style={{ width: '30px' }}>{n}</span>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : (
+                    <p className="text-body-secondary small mb-0">No data available.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+            <div className="col-lg-5">
+              <div className="card border-0 shadow-sm rounded-4 h-100">
+                <div className="card-body p-4">
+                  <h6 className="fw-bold mb-3"><i className="bi bi-exclamation-triangle-fill text-warning me-2"></i>Clients Not Yet Visited</h6>
+                  {stats.clientSummary.clientsNoVisits === 0 ? (
+                    <p className="text-success small mb-0"><i className="bi bi-check-circle-fill me-1"></i>All clients have been visited!</p>
+                  ) : (
+                    <p className="text-body-secondary small mb-0">{stats.clientSummary.clientsNoVisits} clients haven't been visited yet. Go to Clients to schedule a visit.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Recent Client Visits */}
+          {stats.recentClientVisits?.length > 0 && (
+            <div className="card border-0 shadow-sm rounded-4 mb-4">
+              <div className="card-body p-4">
+                <div className="d-flex justify-content-between align-items-center mb-3">
+                  <h6 className="fw-bold mb-0"><i className="bi bi-clock-history me-2"></i>Recent Client Visits</h6>
+                  <button onClick={() => setActivePage('clients')} className="btn btn-outline-secondary btn-sm rounded-pill px-3">All</button>
+                </div>
+                <div className="table-responsive">
+                  <table className="table table-hover align-middle mb-0">
+                    <thead>
+                      <tr>
+                        <th>Client</th>
+                        <th>Type</th>
+                        <th>Agent</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {stats.recentClientVisits.map((v, i) => (
+                        <tr key={i}>
+                          <td className="fw-semibold">{v.clientName}</td>
+                          <td><span className="badge bg-primary-subtle text-primary">{v.clientType}</span></td>
+                          <td>{v.agent}</td>
+                          <td className="text-body-secondary">{new Date(v.date).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+                          <td><span className={`badge rounded-pill ${v.status === 'Active' ? 'bg-success' : v.status === 'Pending' ? 'bg-warning' : 'bg-danger'}`}>{v.status}</span></td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+        </>
+      )}
+
+      {/* Assignment Stats (Admin) */}
+      {stats.role === 'admin' && stats.assignmentSummary && (
+        <div className="row g-3 mb-4">
+          <div className="col-6 col-lg-3">
+            <div className="card stat-card h-100 border-0 border-start border-3 border-warning shadow-sm rounded-3" style={{ cursor: 'pointer' }}
+              onClick={() => setActivePage('assignments')}>
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-start">
+                  <span className="stat-title">Assignments</span>
+                  <div className="stat-icon-box bg-warning-subtle text-warning rounded-2"><i className="bi bi-send-fill"></i></div>
+                </div>
+                <div className="stat-value mt-2">{stats.assignmentSummary.total}</div>
+                <div className="stat-label">{stats.assignmentSummary.pending} pending</div>
+              </div>
+            </div>
+          </div>
+          <div className="col-6 col-lg-3">
+            <div className="card stat-card h-100 border-0 border-start border-3 border-success shadow-sm rounded-3">
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-start">
+                  <span className="stat-title">Completed</span>
+                  <div className="stat-icon-box bg-success-subtle text-success rounded-2"><i className="bi bi-check-circle-fill"></i></div>
+                </div>
+                <div className="stat-value mt-2 text-success">{stats.assignmentSummary.completed}</div>
+                <div className="stat-label">{stats.assignmentSummary.total > 0 ? Math.round(stats.assignmentSummary.completed / stats.assignmentSummary.total * 100) : 0}% completion</div>
+              </div>
+            </div>
+          </div>
+          <div className="col-6 col-lg-3">
+            <div className="card stat-card h-100 border-0 border-start border-3 border-primary shadow-sm rounded-3">
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-start">
+                  <span className="stat-title">Visit Assignments</span>
+                  <div className="stat-icon-box bg-primary-subtle text-primary rounded-2"><i className="bi bi-person-walking"></i></div>
+                </div>
+                <div className="stat-value mt-2">{stats.assignmentSummary.byType?.visits || 0}</div>
+                <div className="stat-label">Physical meetings</div>
+              </div>
+            </div>
+          </div>
+          <div className="col-6 col-lg-3">
+            <div className="card stat-card h-100 border-0 border-start border-3 border-info shadow-sm rounded-3">
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-start">
+                  <span className="stat-title">Call Assignments</span>
+                  <div className="stat-icon-box bg-info-subtle text-info rounded-2"><i className="bi bi-telephone"></i></div>
+                </div>
+                <div className="stat-value mt-2">{stats.assignmentSummary.byType?.calls || 0}</div>
+                <div className="stat-label">Phone calls</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Assignment summary for marketing user */}
+      {stats.role === 'marketing' && stats.assignmentSummary && stats.assignmentSummary.pending > 0 && (
+        <div className="card border-0 shadow-sm rounded-4 mb-4" style={{ borderLeft: '4px solid #f59e0b' }}>
+          <div className="card-body p-4 d-flex justify-content-between align-items-center">
+            <div>
+              <h6 className="fw-bold mb-1"><i className="bi bi-send-fill text-warning me-2"></i>Pending Assignments</h6>
+              <p className="text-body-secondary small mb-0">You have {stats.assignmentSummary.pending} assignment(s) waiting. Check your assignments.</p>
+            </div>
+            <button onClick={() => setActivePage('assignments')} className="btn btn-warning btn-sm px-3 rounded-pill">
+              <i className="bi bi-arrow-right me-1"></i>View
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Visit Tasks (Admin) */}
+      {stats.role === 'admin' && stats.visitTaskSummary && (
+        <div className="row g-3 mb-4">
+          <div className="col-6 col-lg-3">
+            <div className="card stat-card h-100 border-0 border-start border-3 border-primary shadow-sm rounded-3" style={{ cursor: 'pointer' }}
+              onClick={() => setActivePage('visit-tasks')}>
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-start">
+                  <span className="stat-title">Visit Tasks</span>
+                  <div className="stat-icon-box bg-primary-subtle text-primary rounded-2"><i className="bi bi-journal-text"></i></div>
+                </div>
+                <div className="stat-value mt-2">{stats.visitTaskSummary.total}</div>
+                <div className="stat-label">{stats.visitTaskSummary.active} active</div>
+              </div>
+            </div>
+          </div>
+          <div className="col-6 col-lg-3">
+            <div className="card stat-card h-100 border-0 border-start border-3 border-success shadow-sm rounded-3">
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-start">
+                  <span className="stat-title">Reports Submitted</span>
+                  <div className="stat-icon-box bg-success-subtle text-success rounded-2"><i className="bi bi-file-check-fill"></i></div>
+                </div>
+                <div className="stat-value mt-2 text-success">{stats.visitTaskSummary.reports}</div>
+                <div className="stat-label">Visit reports filed</div>
+              </div>
+            </div>
+          </div>
+          <div className="col-6 col-lg-3">
+            <div className="card stat-card h-100 border-0 border-start border-3 border-info shadow-sm rounded-3">
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-start">
+                  <span className="stat-title">Tasks with Reports</span>
+                  <div className="stat-icon-box bg-info-subtle text-info rounded-2"><i className="bi bi-check2-all"></i></div>
+                </div>
+                <div className="stat-value mt-2">{stats.visitTaskSummary.recentTasks?.filter(t => t.reports?.length > 0).length || 0}</div>
+                <div className="stat-label">Tasks that have reports</div>
+              </div>
+            </div>
+          </div>
+          <div className="col-6 col-lg-3">
+            <div className="card stat-card h-100 border-0 border-start border-3 border-warning shadow-sm rounded-3">
+              <div className="card-body">
+                <div className="d-flex justify-content-between align-items-start">
+                  <span className="stat-title">Completion</span>
+                  <div className="stat-icon-box bg-warning-subtle text-warning rounded-2"><i className="bi bi-pie-chart-fill"></i></div>
+                </div>
+                <div className="stat-value mt-2">
+                  {stats.visitTaskSummary.total > 0 ? Math.round(stats.visitTaskSummary.reports / stats.visitTaskSummary.total) : 0}
+                </div>
+                <div className="stat-label">Avg reports per task</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Visit task alert for marketing */}
+      {stats.role === 'marketing' && stats.visitTaskSummary?.active > 0 && (
+        <div className="card border-0 shadow-sm rounded-4 mb-4" style={{ borderLeft: '4px solid #0d6efd' }}>
+          <div className="card-body p-4 d-flex justify-content-between align-items-center">
+            <div>
+              <h6 className="fw-bold mb-1"><i className="bi bi-journal-text text-primary me-2"></i>Active Visit Tasks</h6>
+              <p className="text-body-secondary small mb-0">You have {stats.visitTaskSummary.active} active visit task(s). Go submit your reports.</p>
+            </div>
+            <button onClick={() => setActivePage('visit-tasks')} className="btn btn-primary btn-sm px-3 rounded-pill">
+              <i className="bi bi-arrow-right me-1"></i>View
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Recent Assignments (Admin) */}
+      {stats.role === 'admin' && stats.assignmentSummary?.recent?.length > 0 && (
+        <div className="card border-0 shadow-sm rounded-4 mb-4">
+          <div className="card-body p-4">
+            <div className="d-flex justify-content-between align-items-center mb-3">
+              <h6 className="fw-bold mb-0"><i className="bi bi-send-fill me-2"></i>Recent Assignments</h6>
+              <button onClick={() => setActivePage('assignments')} className="btn btn-outline-secondary btn-sm rounded-pill px-3">All</button>
+            </div>
+            <div className="d-flex flex-column gap-2">
+              {stats.assignmentSummary.recent.map(a => (
+                <div key={a.id} className="p-2 rounded-3 border bg-body-tertiary d-flex justify-content-between align-items-center">
+                  <div className="small">
+                    <span className="fw-semibold">{a.clientName}</span>
+                    <span className={`badge ms-2 ${a.type === 'visit' ? 'bg-primary' : 'bg-info'}`}>
+                      {a.type === 'visit' ? 'Visit' : 'Call'}
+                    </span>
+                    <span className={`badge ms-1 rounded-pill ${a.status === 'completed' ? 'bg-success' : a.status === 'cancelled' ? 'bg-danger' : 'bg-warning text-dark'}`}>
+                      {a.status}
+                    </span>
+                    <span className="text-body-secondary ms-2">by {a.assignedByName}</span>
+                  </div>
+                  <small className="text-body-secondary">{a.date}</small>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Charts */}
       <div className="row g-3 mb-4">
