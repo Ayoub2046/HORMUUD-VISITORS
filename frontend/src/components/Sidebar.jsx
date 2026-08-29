@@ -38,6 +38,8 @@ export default function Sidebar({ activePage, setActivePage, isOpen, onClose }) 
             {navItem('visits', 'bi bi-list-check', t('nav.visits'))}
             {user.role === 'marketing' && navItem('add-visit', 'bi bi-plus-circle-fill', t('nav.addVisit'))}
             {navItem('assignments', 'bi bi-send-fill', 'Assignments')}
+            {navItem('target-tasks', 'bi bi-bullseye', 'Target Tasks')}
+            {navItem('notifications', 'bi bi-bell-fill', 'Notifications')}
           </div>
         </div>
 

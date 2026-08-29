@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 import { apiFetch } from '../utils/api';
 import AppFooter from '../components/AppFooter';
+import logo from '../../logo.png';
 
 export default function Login() {
   const { login } = useAuth();
@@ -151,21 +152,21 @@ export default function Login() {
         <div className="hormuud-nav-inner">
           {/* Logo */}
           <div className="hormuud-logo-wrap">
-            <div className="hormuud-logo-icon" style={{
-              position: 'relative',
-              width: '40px',
-              height: '40px',
-              borderRadius: '50%',
-              background: 'rgba(255,255,255,0.2)',
-              boxShadow: '0 0 0 4px rgba(255,255,255,0.1)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              border: '1px solid rgba(255,255,255,0.3)',
-              marginRight: '8px'
-            }}>
-              <span style={{ color: '#ffffff', fontSize: '1.35rem', fontWeight: '800', fontFamily: "'Outfit', sans-serif", lineHeight: 1 }}>A</span>
-            </div>
+            <img
+              src={logo}
+              alt="Hormuud Telecom Logo"
+              style={{
+                width: '40px',
+                height: '40px',
+                objectFit: 'contain',
+                borderRadius: '50%',
+                background: 'rgba(255,255,255,0.2)',
+                boxShadow: '0 0 0 4px rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.3)',
+                marginRight: '8px',
+                padding: '2px'
+              }}
+            />
             <div className="hormuud-logo-text">
               <span className="logo-name">Booqasho</span>
               <span className="logo-sub">by Hormuud Telecom</span>

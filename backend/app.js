@@ -15,7 +15,9 @@ const ispRoutes = require('./routes/isps');
 const serviceRoutes = require('./routes/services');
 const assignmentRoutes = require('./routes/assignments');
 const visitTaskRoutes = require('./routes/visitTasks');
+const targetTaskRoutes = require('./routes/targetTasks');
 const recycleBinRoutes = require('./routes/recycleBin');
+const notificationRoutes = require('./routes/notifications');
 
 const app = express();
 
@@ -76,7 +78,9 @@ app.use('/api/isps', ispRoutes);
 app.use('/api/services', serviceRoutes);
 app.use('/api/assignments', assignmentRoutes);
 app.use('/api/visit-tasks', visitTaskRoutes);
+app.use('/api/target-tasks', targetTaskRoutes);
 app.use('/api/recycle-bin', recycleBinRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 app.get('/', (req, res) => {
   res.status(200).json({

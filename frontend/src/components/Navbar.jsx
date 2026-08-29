@@ -1,10 +1,24 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
 
-export default function Navbar({ activePage, toggleSidebar, theme, toggleTheme }) {
-  const { user, logout, dbConnected } = useAuth();
+export default function Navbar({ activePage, setActivePage, toggleSidebar, theme, toggleTheme }) {
+  const { user, logout, dbConnected, apiRequest } = useAuth();
   const { t, i18n } = useTranslation();
+  const [unread, setUnread] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    const load = async () => {
+      try {
+        const res = await apiRequest('/notifications/unread-count');
+        if (!cancelled && res.success) setUnread(res.count || 0);
+      } catch (e) { /* noop */ }
+    };
+    load();
+    const timer = setInterval(load, 30000);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, []);
 
   const getPageTitle = (page) => {
     switch(page) {
@@ -21,6 +35,7 @@ export default function Navbar({ activePage, toggleSidebar, theme, toggleTheme }
       case 'users':        return t('nav.users');
       case 'reports':      return t('nav.reports');
       case 'recycle-bin':  return t('nav.recycle_bin') || 'Recycle Bin';
+      case 'notifications': return 'Notifications';
       case 'settings':     return t('nav.settings');
       default:             return 'Booqasho App';
     }
@@ -46,6 +61,20 @@ export default function Navbar({ activePage, toggleSidebar, theme, toggleTheme }
         {/* Theme Toggle */}
         <button className="theme-toggle btn btn-sm btn-outline-secondary rounded-circle" onClick={toggleTheme} title={theme === 'dark' ? 'Light Mode' : 'Dark Mode'}>
           {theme === 'dark' ? <i className="bi bi-sun-fill"></i> : <i className="bi bi-moon-stars-fill"></i>}
+        </button>
+
+        {/* Notifications Bell */}
+        <button
+          className="theme-toggle btn btn-sm btn-outline-secondary rounded-circle position-relative"
+          onClick={() => { setUnread(0); setActivePage && setActivePage('notifications'); }}
+          title="Notifications"
+        >
+          <i className="bi bi-bell-fill"></i>
+          {unread > 0 && (
+            <span className="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style={{ fontSize: '0.6rem' }}>
+              {unread > 9 ? '9+' : unread}
+            </span>
+          )}
         </button>
 
         {/* User Dropdown */}

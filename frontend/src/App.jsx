@@ -15,7 +15,9 @@ import ClientDetail from './pages/ClientDetail';
 import Isps from './pages/Isps';
 import MyAssignments from './pages/MyAssignments';
 import VisitTasks from './pages/VisitTasks';
+import TargetTasks from './pages/TargetTasks';
 import RecycleBin from './pages/RecycleBin';
+import Notifications from './pages/Notifications';
 import AppFooter from './components/AppFooter';
 
 export default function App() {
@@ -71,9 +73,11 @@ export default function App() {
       case 'clientDetail': return <ClientDetail clientId={clientId} setActivePage={handlePageChange} setClientId={setClientId} />;
       case 'assignments': return <MyAssignments setActivePage={handlePageChange} setClientId={setClientId} />;
       case 'visit-tasks': return <VisitTasks setActivePage={handlePageChange} />;
+      case 'target-tasks': return <TargetTasks />;
       case 'recycle-bin': return user.role === 'admin' ? <RecycleBin /> : <Dashboard setActivePage={handlePageChange} />;
       case 'isps': return user.role === 'admin' ? <Isps /> : <Dashboard setActivePage={handlePageChange} />;
       case 'settings': return <Settings />;
+      case 'notifications': return <Notifications setActivePage={handlePageChange} />;
       default: return <Dashboard setActivePage={handlePageChange} />;
     }
   };
@@ -83,7 +87,7 @@ export default function App() {
       <Sidebar activePage={activePage} setActivePage={handlePageChange} isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
       {sidebarOpen && <div className="sidebar-overlay d-lg-none" onClick={() => setSidebarOpen(false)} />}
       <div className="app-main">
-        <Navbar activePage={activePage} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} theme={theme} toggleTheme={toggleTheme} />
+        <Navbar activePage={activePage} setActivePage={handlePageChange} toggleSidebar={() => setSidebarOpen(!sidebarOpen)} theme={theme} toggleTheme={toggleTheme} />
         <main className="app-page-content">
           {renderPage()}
         </main>

@@ -102,7 +102,7 @@ function buildSeedData() {
     }
   ];
 
-  return { users, visits, auditLogs, otps: [], passwordResets: [], tasks, clients, isps: INIT_ISPS, entSvcs: INIT_ENT_SVCS, indSvcs: INIT_IND_SVCS, clientAssignments: [], visitTasks: [], visitReports: [], recycleBin: [] };
+  return { users, visits, auditLogs, otps: [], passwordResets: [], tasks, clients, isps: INIT_ISPS, entSvcs: INIT_ENT_SVCS, indSvcs: INIT_IND_SVCS, clientAssignments: [], visitTasks: [], visitReports: [], targetTasks: [], targetProgress: [], notifications: [], recycleBin: [] };
 }
 
 function createMockDb() {
@@ -494,6 +494,118 @@ function createMockDb() {
         if (idx === -1) return null;
         const [removed] = store.visitReports.splice(idx, 1);
         store.recycleBin.push({ id: uuid(), original_id: removed.id, type: 'visitReports', data: JSON.parse(JSON.stringify(removed)), deleted_by: 'system', deleted_at: new Date().toISOString() });
+        return removed;
+      }
+    },
+
+    targetTasks: {
+      findMany: async (filters = {}) => {
+        let list = [...store.targetTasks].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        if (filters.assigned_to) list = list.filter(t => t.assigned_to === filters.assigned_to);
+        if (filters.assigned_by) list = list.filter(t => t.assigned_by === filters.assigned_by);
+        if (filters.service) list = list.filter(t => t.service === filters.service);
+        if (filters.status) list = list.filter(t => t.status === filters.status);
+        return list;
+      },
+      findOne: async (id) => store.targetTasks.find(t => t.id === id) || null,
+      create: async (data) => {
+        const task = {
+          id: uuid(),
+          service: data.service,
+          target_quantity: data.target_quantity || 0,
+          period_type: data.period_type || 'monthly',
+          start_date: data.start_date || null,
+          end_date: data.end_date || null,
+          assigned_to: data.assigned_to || null,
+          assigned_by: data.assigned_by,
+          status: data.status || 'active',
+          created_at: new Date().toISOString()
+        };
+        store.targetTasks.push(task);
+        return task;
+      },
+      update: async (id, updates) => dbUpdate('targetTasks', id, updates),
+      delete: async (id) => {
+        const idx = store.targetTasks.findIndex(t => t.id === id);
+        if (idx === -1) return null;
+        const [removed] = store.targetTasks.splice(idx, 1);
+        store.targetProgress = store.targetProgress.filter(p => p.target_id !== id);
+        store.recycleBin.push({ id: uuid(), original_id: removed.id, type: 'targetTasks', data: JSON.parse(JSON.stringify(removed)), deleted_by: 'system', deleted_at: new Date().toISOString() });
+        return removed;
+      }
+    },
+
+    targetProgress: {
+      findMany: async (filters = {}) => {
+        let list = [...store.targetProgress].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        if (filters.target_id) list = list.filter(p => p.target_id === filters.target_id);
+        if (filters.user_id) list = list.filter(p => p.user_id === filters.user_id);
+        return list;
+      },
+      create: async (data) => {
+        const progress = {
+          id: uuid(),
+          target_id: data.target_id,
+          user_id: data.user_id,
+          client_name: data.client_name || '',
+          client_phone: data.client_phone || '',
+          location: data.location || '',
+          visit_date: data.visit_date || new Date().toISOString().split('T')[0],
+          services: data.services || [],
+          notes: data.notes || '',
+          created_at: new Date().toISOString()
+        };
+        store.targetProgress.push(progress);
+        return progress;
+      },
+      delete: async (id) => {
+        const idx = store.targetProgress.findIndex(p => p.id === id);
+        if (idx === -1) return null;
+        const [removed] = store.targetProgress.splice(idx, 1);
+        return removed;
+      }
+    },
+
+    notifications: {
+      findMany: async (filters = {}) => {
+        let list = [...store.notifications].sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+        if (filters.user_id) list = list.filter(n => n.user_id === filters.user_id);
+        if (filters.is_read !== undefined && filters.is_read !== null) {
+          const want = String(filters.is_read) === 'true';
+          list = list.filter(n => !!n.is_read === want);
+        }
+        return list;
+      },
+      findOne: async (id) => store.notifications.find(n => n.id === id) || null,
+      create: async (data) => {
+        const notification = {
+          id: uuid(),
+          user_id: data.user_id,
+          type: data.type || 'task',
+          title: data.title || '',
+          message: data.message || '',
+          link: data.link || null,
+          is_read: false,
+          created_at: new Date().toISOString()
+        };
+        store.notifications.push(notification);
+        return notification;
+      },
+      update: async (id, updates) => dbUpdate('notifications', id, updates),
+      markAllRead: async (user_id) => {
+        let count = 0;
+        store.notifications.forEach(n => {
+          if (n.user_id === user_id && !n.is_read) { n.is_read = true; count++; }
+        });
+        return count;
+      },
+      countUnread: async (user_id) => {
+        return store.notifications.filter(n => n.user_id === user_id && !n.is_read).length;
+      },
+      delete: async (id) => {
+        const idx = store.notifications.findIndex(n => n.id === id);
+        if (idx === -1) return null;
+        const [removed] = store.notifications.splice(idx, 1);
         return removed;
       }
     },

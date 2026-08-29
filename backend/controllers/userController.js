@@ -104,6 +104,40 @@ exports.updateUser = async (req, res) => {
   }
 };
 
+exports.resetPassword = async (req, res) => {
+  try {
+    const userId = req.params.id;
+    const user = await db.users.findOne({ id: userId });
+    if (!user) {
+      return res.status(404).json({ success: false, message: 'User not found.' });
+    }
+
+    let newPassword = req.body.password;
+    if (!newPassword || typeof newPassword !== 'string' || newPassword.trim().length < 6) {
+      return res.status(400).json({ success: false, message: 'Please provide a new password of at least 6 characters.' });
+    }
+    newPassword = newPassword.trim();
+
+    const password_hash = bcrypt.hashSync(newPassword, 10);
+    await db.users.update(userId, { password_hash });
+
+    await db.auditLogs.create({
+      user_id: req.user.id,
+      action: 'RESET_PASSWORD',
+      description: `Reset password for user ${user.full_name} (${user.email})`
+    });
+
+    res.status(200).json({
+      success: true,
+      message: 'Password reset successfully. Share the new password with the user.',
+      new_password: newPassword
+    });
+  } catch (error) {
+    console.error('Error resetting password:', error);
+    res.status(500).json({ success: false, message: 'Failed to reset password.' });
+  }
+};
+
 exports.deleteUser = async (req, res) => {
   try {
     const userId = req.params.id;

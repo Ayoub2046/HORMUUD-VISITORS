@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { notify, notifyAllStaff } = require('../utils/notify');
 
 exports.getTasks = async (req, res) => {
   try {
@@ -66,6 +67,21 @@ exports.createTask = async (req, res) => {
     });
     await db.auditLogs.create({ user_id: req.user.id, action: 'CREATE_VISIT_TASK', description: `Created visit task "${task.title}"` });
     await db.auditLogs.create({ user_id: req.user.id, action: 'CREATE_DAILY_TASK', description: `Created daily task "${svc}" linked to visit task "${task.title}"` });
+    if (assigned_to && assigned_to.length > 0) {
+      await notify(assigned_to, {
+        type: 'visit_task',
+        title: 'New visit task',
+        message: `You have been assigned the visit task "${task.title}".`,
+        link: '/visit-tasks'
+      });
+    } else {
+      await notifyAllStaff({
+        type: 'visit_task',
+        title: 'New visit task',
+        message: `A new visit task "${task.title}" has been assigned.`,
+        link: '/visit-tasks'
+      });
+    }
     res.status(201).json({ success: true, message: 'Visit task created.', data: task });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to create task.' });

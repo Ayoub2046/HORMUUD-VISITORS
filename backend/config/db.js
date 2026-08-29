@@ -95,6 +95,9 @@ const db = {
   get clientAssignments() { return getInstance().clientAssignments; },
   get visitTasks() { return getInstance().visitTasks; },
   get visitReports() { return getInstance().visitReports; },
+  get targetTasks() { return getInstance().targetTasks; },
+  get targetProgress() { return getInstance().targetProgress; },
+  get notifications() { return getInstance().notifications; },
   get recycleBin() { return getInstance().recycleBin; }
 };
 

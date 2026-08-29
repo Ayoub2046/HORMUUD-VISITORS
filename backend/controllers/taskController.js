@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { notify, notifyAllStaff } = require('../utils/notify');
 
 exports.getTodayTasks = async (req, res) => {
   try {
@@ -70,6 +71,22 @@ exports.createTask = async (req, res) => {
       action: 'CREATE_TASK',
       description: `Assigned "${service}" task to ${assigned_to || 'all marketing staff'} for ${date}`
     });
+
+    if (assigned_to) {
+      await notify(assigned_to, {
+        type: 'task',
+        title: 'New task assigned',
+        message: `You have been assigned "${service}" for ${date}.`,
+        link: '/tasks'
+      });
+    } else {
+      await notifyAllStaff({
+        type: 'task',
+        title: 'New work assigned',
+        message: `A new "${service}" task has been assigned for ${date}.`,
+        link: '/tasks'
+      });
+    }
 
     res.status(201).json({ success: true, message: 'Task created successfully.', data: task });
   } catch (error) {

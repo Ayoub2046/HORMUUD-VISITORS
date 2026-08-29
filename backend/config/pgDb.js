@@ -494,6 +494,125 @@ function createPgDb(pool) {
       }
     },
 
+    targetTasks: {
+      findMany: async (filters = {}) => {
+        let query = 'SELECT * FROM target_tasks WHERE 1=1';
+        const values = [];
+        let idx = 1;
+        if (filters.assigned_to) { query += ` AND assigned_to = $${idx++}`; values.push(filters.assigned_to); }
+        if (filters.assigned_by) { query += ` AND assigned_by = $${idx++}`; values.push(filters.assigned_by); }
+        if (filters.service) { query += ` AND service = $${idx++}`; values.push(filters.service); }
+        if (filters.status) { query += ` AND status = $${idx++}`; values.push(filters.status); }
+        query += ' ORDER BY created_at DESC';
+        const res = await pool.query(query, values);
+        return res.rows;
+      },
+      findOne: async (id) => {
+        const res = await pool.query('SELECT * FROM target_tasks WHERE id = $1', [id]);
+        return res.rows[0] || null;
+      },
+      create: async (data) => {
+        const query = `INSERT INTO target_tasks (service, target_quantity, period_type, start_date, end_date, assigned_to, assigned_by, status) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`;
+        const res = await pool.query(query, [
+          data.service,
+          data.target_quantity || 0,
+          data.period_type || 'monthly',
+          data.start_date || null,
+          data.end_date || null,
+          data.assigned_to || null,
+          data.assigned_by,
+          data.status || 'active'
+        ]);
+        return res.rows[0];
+      },
+      update: async (id, updates) => dbUpdate(pool, 'target_tasks', id, updates),
+      delete: async (id) => {
+        await pool.query('DELETE FROM target_progress WHERE target_id = $1', [id]);
+        const res = await pool.query('DELETE FROM target_tasks WHERE id = $1 RETURNING *', [id]);
+        await pool.query('INSERT INTO recycle_bin (original_id, type, data) VALUES ($1, $2, $3)', [id, 'targetTasks', JSON.stringify(res.rows[0] || {})]);
+        return res.rows[0];
+      }
+    },
+
+    targetProgress: {
+      findMany: async (filters = {}) => {
+        let query = 'SELECT * FROM target_progress WHERE 1=1';
+        const values = [];
+        let idx = 1;
+        if (filters.target_id) { query += ` AND target_id = $${idx++}`; values.push(filters.target_id); }
+        if (filters.user_id) { query += ` AND user_id = $${idx++}`; values.push(filters.user_id); }
+        if (filters.startDate) { query += ` AND visit_date >= $${idx++}`; values.push(filters.startDate); }
+        if (filters.endDate) { query += ` AND visit_date <= $${idx++}`; values.push(filters.endDate); }
+        query += ' ORDER BY created_at DESC';
+        const res = await pool.query(query, values);
+        const parseArr = (v) => { if (Array.isArray(v)) return v; try { return JSON.parse(v) || []; } catch(e) { return []; } };
+        return res.rows.map(r => ({ ...r, services: parseArr(r.services) }));
+      },
+      create: async (data) => {
+        const query = `INSERT INTO target_progress (target_id, user_id, client_name, client_phone, location, visit_date, services, notes) VALUES ($1,$2,$3,$4,$5,$6,$7,$8) RETURNING *`;
+        const res = await pool.query(query, [
+          data.target_id,
+          data.user_id,
+          data.client_name || '',
+          data.client_phone || '',
+          data.location || '',
+          data.visit_date || new Date().toISOString().split('T')[0],
+          JSON.stringify(Array.isArray(data.services) ? data.services : []),
+          data.notes || ''
+        ]);
+        const r = res.rows[0];
+        return { ...r, services: Array.isArray(r.services) ? r.services : (() => { try { return JSON.parse(r.services); } catch(e) { return []; } })() };
+      },
+      delete: async (id) => {
+        const res = await pool.query('DELETE FROM target_progress WHERE id = $1 RETURNING *', [id]);
+        return res.rows[0];
+      }
+    },
+
+    notifications: {
+      findMany: async (filters = {}) => {
+        let query = 'SELECT * FROM notifications WHERE 1=1';
+        const values = [];
+        let idx = 1;
+        if (filters.user_id) { query += ` AND user_id = $${idx++}`; values.push(filters.user_id); }
+        if (filters.is_read !== undefined && filters.is_read !== null) {
+          query += ` AND is_read = $${idx++}`;
+          values.push(String(filters.is_read) === 'true');
+        }
+        query += ' ORDER BY created_at DESC';
+        const res = await pool.query(query, values);
+        return res.rows;
+      },
+      findOne: async (id) => {
+        const res = await pool.query('SELECT * FROM notifications WHERE id = $1', [id]);
+        return res.rows[0] || null;
+      },
+      create: async (data) => {
+        const query = `INSERT INTO notifications (user_id, type, title, message, link) VALUES ($1,$2,$3,$4,$5) RETURNING *`;
+        const res = await pool.query(query, [
+          data.user_id,
+          data.type || 'task',
+          data.title || '',
+          data.message || '',
+          data.link || null
+        ]);
+        return res.rows[0];
+      },
+      update: async (id, updates) => dbUpdate(pool, 'notifications', id, updates),
+      markAllRead: async (user_id) => {
+        const res = await pool.query('UPDATE notifications SET is_read = true WHERE user_id = $1 AND is_read = false', [user_id]);
+        return res.rowCount || 0;
+      },
+      countUnread: async (user_id) => {
+        const res = await pool.query('SELECT COUNT(*)::int AS count FROM notifications WHERE user_id = $1 AND is_read = false', [user_id]);
+        return res.rows[0]?.count || 0;
+      },
+      delete: async (id) => {
+        const res = await pool.query('DELETE FROM notifications WHERE id = $1 RETURNING *', [id]);
+        return res.rows[0];
+      }
+    },
+
     recycleBin: {
       findMany: async () => {
         const res = await pool.query('SELECT * FROM recycle_bin ORDER BY deleted_at DESC');

@@ -1,4 +1,5 @@
 const db = require('../config/db');
+const { notify } = require('../utils/notify');
 
 exports.getAssignments = async (req, res) => {
   try {
@@ -45,6 +46,17 @@ exports.createAssignment = async (req, res) => {
       type: type || 'visit', notes: notes || '', date: date || new Date().toISOString().split('T')[0]
     });
     await db.auditLogs.create({ user_id: req.user.id, action: 'CREATE_ASSIGNMENT', description: `Assigned ${to.length} marketer(s) to client ${client_id} for a ${assignment.type}` });
+    let clientName = '';
+    try {
+      const client = await db.clients.findOne(client_id);
+      clientName = client?.name || '';
+    } catch (e) {}
+    await notify(to, {
+      type: 'assignment',
+      title: 'New client assignment',
+      message: `You have been assigned to client "${clientName || client_id}" for ${assignment.type}.`,
+      link: '/assignments'
+    });
     res.status(201).json({ success: true, message: 'Assignment created.', data: assignment });
   } catch (error) {
     res.status(500).json({ success: false, message: 'Failed to create assignment.' });

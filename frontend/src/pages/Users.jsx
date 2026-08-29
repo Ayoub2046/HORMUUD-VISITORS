@@ -15,6 +15,13 @@ export default function Users() {
   const [savingAction, setSavingAction] = useState(false);
   const [modalError, setModalError] = useState(null);
 
+  // Reset Password Modal State
+  const [resetUser, setResetUser] = useState(null);
+  const [resetPassword, setResetPassword] = useState('');
+  const [resetResult, setResetResult] = useState(null);
+  const [resetError, setResetError] = useState(null);
+  const [resetting, setResetting] = useState(false);
+
   const fetchUsers = async () => {
     try {
       setLoading(true);
@@ -85,6 +92,39 @@ export default function Users() {
     }
   };
 
+  const handleOpenReset = (user) => {
+    setResetUser(user);
+    setResetPassword('');
+    setResetResult(null);
+    setResetError(null);
+  };
+
+  const handleResetPassword = async (e) => {
+    e.preventDefault();
+    if (!resetPassword.trim()) {
+      setResetError('Please enter a new password.');
+      return;
+    }
+    try {
+      setResetting(true);
+      setResetError(null);
+      const res = await apiRequest(`/users/${resetUser.id}/reset-password`, {
+        method: 'PUT',
+        body: JSON.stringify({ password: resetPassword.trim() })
+      });
+      if (res.success) {
+        setResetResult(res.new_password);
+        setResetPassword('');
+      } else {
+        setResetError(res.message || 'Failed to reset password.');
+      }
+    } catch (err) {
+      setResetError(err.message || 'Failed to reset password.');
+    } finally {
+      setResetting(false);
+    }
+  };
+
   return (
     <div>
       <div className="d-flex flex-column flex-sm-row justify-content-between align-items-sm-center mb-4 gap-3">
@@ -147,6 +187,9 @@ export default function Users() {
                         <div className="d-flex justify-content-center gap-1">
                           <button onClick={() => handleOpenEdit(u)} className="btn btn-light btn-sm text-primary" title="Edit User">
                             <i className="bi bi-pencil-square"></i>
+                          </button>
+                          <button onClick={() => handleOpenReset(u)} className="btn btn-light btn-sm text-warning" title="Reset Password">
+                            <i className="bi bi-key-fill"></i>
                           </button>
                           <button onClick={() => handleDelete(u.id, u.full_name)} className="btn btn-light btn-sm text-danger" title="Delete User">
                             <i className="bi bi-trash3-fill"></i>
@@ -218,6 +261,60 @@ export default function Users() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Reset Password Modal */}
+      {resetUser && (
+        <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(5px)' }}>
+          <div className="modal-dialog modal-dialog-centered modal-dialog-scrollable modal-fullscreen-sm-down">
+            <div className="modal-content shadow border-0">
+              <div className="modal-header border-bottom-0 pb-0">
+                <h5 className="modal-title fw-bold">Reset Password</h5>
+                <button type="button" className="btn-close" onClick={() => setResetUser(null)} disabled={resetting}></button>
+              </div>
+              {resetError && (
+                <div className="mx-4 mt-3 alert alert-danger d-flex align-items-center gap-2 py-2 small" role="alert">
+                  <i className="bi bi-exclamation-triangle-fill"></i>
+                  {resetError}
+                </div>
+              )}
+              {resetResult ? (
+                <div className="modal-body pb-2 text-center py-4">
+                  <i className="bi bi-check-circle-fill text-success fs-1 d-block mb-2"></i>
+                  <p className="fw-semibold mb-1">Password reset successfully!</p>
+                  <p className="text-body-secondary small mb-3">Share this new password with <strong>{resetUser.full_name}</strong>. It is shown only once.</p>
+                  <div className="alert alert-warning d-flex align-items-center justify-content-between gap-2 py-2" role="alert">
+                    <code className="fw-bold fs-5">{resetResult}</code>
+                    <button
+                      className="btn btn-sm btn-outline-warning"
+                      onClick={() => navigator.clipboard && navigator.clipboard.writeText(resetResult)}
+                      title="Copy password"
+                    >
+                      <i className="bi bi-clipboard"></i>
+                    </button>
+                  </div>
+                  <button className="btn btn-secondary" onClick={() => setResetUser(null)}>Close</button>
+                </div>
+              ) : (
+                <form onSubmit={handleResetPassword}>
+                  <div className="modal-body pb-0">
+                    <p className="text-body-secondary small">Set a new password for <strong>{resetUser.full_name}</strong> ({resetUser.email}). The new password will be shown once so you can tell the user.</p>
+                    <div className="mb-3">
+                      <label className="form-label small fw-semibold text-body-secondary">New Password *</label>
+                      <input type="text" className="form-control" value={resetPassword} onChange={(e) => setResetPassword(e.target.value)} placeholder="At least 6 characters" disabled={resetting} required />
+                    </div>
+                  </div>
+                  <div className="modal-footer bg-body-tertiary border-0 mt-3 rounded-bottom">
+                    <button type="button" className="btn btn-secondary" onClick={() => setResetUser(null)} disabled={resetting}>Cancel</button>
+                    <button type="submit" className="btn btn-warning d-flex align-items-center gap-2 text-dark" disabled={resetting}>
+                      {resetting ? <><span className="spinner-border spinner-border-sm"></span> Resetting...</> : <><i className="bi bi-key-fill"></i> Reset Password</>}
+                    </button>
+                  </div>
+                </form>
+              )}
             </div>
           </div>
         </div>

@@ -261,3 +261,68 @@ create table if not exists recycle_bin (
   deleted_at timestamp with time zone default timezone('utc'::text, now()) not null
 );
 
+-- --------------------------------------------------------------------------
+-- 14. TARGET TASKS TABLE (Managers set sales/visit targets for marketers)
+-- --------------------------------------------------------------------------
+create table if not exists target_tasks (
+  id uuid default uuid_generate_v4() primary key,
+  service text not null,
+  target_quantity integer not null default 0,
+  period_type text not null default 'monthly' check (period_type in ('daily', 'weekly', 'monthly', 'yearly')),
+  start_date date,
+  end_date date,
+  assigned_to uuid references users(id) on delete set null,
+  assigned_by uuid references users(id) on delete set null,
+  status text default 'active' check (status in ('active', 'completed', 'cancelled')),
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create index if not exists idx_target_tasks_assigned_to on target_tasks(assigned_to);
+create index if not exists idx_target_tasks_service on target_tasks(service);
+
+-- --------------------------------------------------------------------------
+-- 15. TARGET PROGRESS TABLE (Marketer logs each client acquired toward a target)
+-- --------------------------------------------------------------------------
+-- --------------------------------------------------------------------------
+-- 15. TARGET PROGRESS TABLE (Marketer records each client service visit toward a target)
+--     Each row = one client visited; `services` lists the Hormuud services delivered.
+-- --------------------------------------------------------------------------
+create table if not exists target_progress (
+  id uuid default uuid_generate_v4() primary key,
+  target_id uuid references target_tasks(id) on delete cascade not null,
+  user_id uuid references users(id) on delete set null not null,
+  client_name text not null,
+  client_phone text,
+  location text,
+  visit_date date default current_date not null,
+  services jsonb default '[]'::jsonb,
+  notes text,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create index if not exists idx_target_progress_target_id on target_progress(target_id);
+create index if not exists idx_target_progress_user_id on target_progress(user_id);
+create index if not exists idx_target_progress_visit_date on target_progress(visit_date);
+
+-- Migration for existing installations that created the table without services/visit_date
+alter table target_progress add column if not exists visit_date date default current_date;
+alter table target_progress add column if not exists services jsonb default '[]'::jsonb;
+
+-- --------------------------------------------------------------------------
+-- 16. NOTIFICATIONS TABLE (In-app notifications when tasks/work are assigned)
+-- --------------------------------------------------------------------------
+create table if not exists notifications (
+  id uuid default uuid_generate_v4() primary key,
+  user_id uuid references users(id) on delete cascade not null,
+  type text default 'task',
+  title text not null,
+  message text,
+  link text,
+  is_read boolean default false,
+  created_at timestamp with time zone default timezone('utc'::text, now()) not null
+);
+
+create index if not exists idx_notifications_user_id on notifications(user_id);
+create index if not exists idx_notifications_read on notifications(is_read);
+create index if not exists idx_notifications_created_at on notifications(created_at);
+
