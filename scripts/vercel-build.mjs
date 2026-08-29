@@ -13,8 +13,8 @@ function run(cmd, cwd) {
   execSync(cmd, { cwd, stdio: 'inherit' });
 }
 
-// 1. Install frontend deps (if needed) and build the Vite app
-run('npm install', join(root, 'frontend'));
+// 1. Install frontend deps (including dev deps needed for the Vite build) and build
+run('npm install --include=dev', join(root, 'frontend'));
 run('npm run build', join(root, 'frontend'));
 
 // 2. Ensure frontend has its API base set to /api (already the case via frontend/.env)
