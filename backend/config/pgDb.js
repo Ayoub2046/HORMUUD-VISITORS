@@ -370,6 +370,11 @@ function createPgDb(pool) {
           if (e.code === '23505') return null;
           throw e;
         }
+      },
+      delete: async (name) => {
+        const res = await pool.query('DELETE FROM ent_svcs WHERE name = $1 RETURNING name', [name]);
+        await pool.query('INSERT INTO recycle_bin (original_id, type, data) VALUES ($1, $2, $3)', [name, 'entSvcs', JSON.stringify({ name })]);
+        return res.rows[0]?.name || null;
       }
     },
 
@@ -388,6 +393,11 @@ function createPgDb(pool) {
           if (e.code === '23505') return null;
           throw e;
         }
+      },
+      delete: async (name) => {
+        const res = await pool.query('DELETE FROM ind_svcs WHERE name = $1 RETURNING name', [name]);
+        await pool.query('INSERT INTO recycle_bin (original_id, type, data) VALUES ($1, $2, $3)', [name, 'indSvcs', JSON.stringify({ name })]);
+        return res.rows[0]?.name || null;
       }
     },
 

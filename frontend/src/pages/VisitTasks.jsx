@@ -145,7 +145,7 @@ export default function VisitTasks({ setActivePage }) {
 
 /* ───── Create Task Form ───── */
 function CreateTaskForm({ onSave, onClose }) {
-  const { apiRequest } = useAuth();
+  const { user, apiRequest } = useAuth();
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [users, setUsers] = useState([]);
@@ -153,6 +153,37 @@ function CreateTaskForm({ onSave, onClose }) {
   const [services, setServices] = useState([]);
   const [selectedSvcs, setSelectedSvcs] = useState([]);
   const [saving, setSaving] = useState(false);
+  const [showAddSvc, setShowAddSvc] = useState(false);
+  const [newSvcName, setNewSvcName] = useState('');
+  const [newSvcType, setNewSvcType] = useState('Enterprise');
+  const [savingSvc, setSavingSvc] = useState(false);
+
+  const isAdmin = user?.role === 'admin';
+
+  const addNewService = async () => {
+    const v = newSvcName.trim();
+    if (!v) { alert('Please enter a service name.'); return; }
+    if (services.includes(v)) { alert('This service already exists.'); return; }
+    setSavingSvc(true);
+    try {
+      const res = await apiRequest('/services', {
+        method: 'POST',
+        body: JSON.stringify({ name: v, type: newSvcType })
+      });
+      if (res.success) {
+        setServices(prev => [...prev, v]);
+        setSelectedSvcs(prev => prev.includes(v) ? prev : [...prev, v]);
+        setNewSvcName('');
+        setShowAddSvc(false);
+      } else {
+        alert(res.message || 'Failed to add service.');
+      }
+    } catch (e) {
+      alert(e.message || 'Failed to add service.');
+    } finally {
+      setSavingSvc(false);
+    }
+  };
 
   useEffect(() => {
     (async () => {
@@ -230,6 +261,30 @@ function CreateTaskForm({ onSave, onClose }) {
                 ))}
                 {services.length === 0 && <p className="text-body-secondary small">No services defined.</p>}
               </div>
+              {isAdmin && (
+                <div className="mt-2">
+                  {!showAddSvc ? (
+                    <button type="button" className="btn btn-sm btn-outline-primary" onClick={() => setShowAddSvc(true)}>
+                      <i className="bi bi-plus-lg me-1"></i>Add New Service
+                    </button>
+                  ) : (
+                    <div className="p-2 rounded-3 border bg-body-tertiary d-flex flex-wrap gap-2 align-items-center">
+                      <input className="form-control form-control-sm" style={{ flex: '1 1 200px' }}
+                        autoFocus placeholder="New service name"
+                        value={newSvcName} onChange={e => setNewSvcName(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && addNewService()} />
+                      <select className="form-select form-select-sm w-auto" value={newSvcType} onChange={e => setNewSvcType(e.target.value)}>
+                        <option value="Enterprise">Enterprise</option>
+                        <option value="Individual">Individual</option>
+                      </select>
+                      <button type="button" className="btn btn-sm btn-primary" disabled={savingSvc || !newSvcName.trim()} onClick={addNewService}>
+                        {savingSvc ? <span className="spinner-border spinner-border-sm"></span> : 'Add'}
+                      </button>
+                      <button type="button" className="btn btn-sm btn-light border" onClick={() => { setShowAddSvc(false); setNewSvcName(''); }}>Cancel</button>
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
           </div>
           <div className="modal-footer border-0">

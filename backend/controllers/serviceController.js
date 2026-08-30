@@ -27,6 +27,22 @@ exports.addService = async (req, res) => {
     await db.auditLogs.create({ user_id: req.user.id, action: 'ADD_SERVICE', description: `Added ${type} service "${name}"` });
     res.status(201).json({ success: true, message: `Service "${name}" added.`, data: result });
   } catch (error) {
+    console.error('Error adding service:', error);
     res.status(500).json({ success: false, message: 'Failed to add service.' });
+  }
+};
+
+exports.deleteService = async (req, res) => {
+  try {
+    const name = decodeURIComponent(req.params.name);
+    const type = req.query.type === 'Individual' ? 'Individual' : 'Enterprise';
+    const collection = type === 'Enterprise' ? db.entSvcs : db.indSvcs;
+    const result = await collection.delete(name);
+    if (!result) return res.status(404).json({ success: false, message: 'Service not found.' });
+    await db.auditLogs.create({ user_id: req.user.id, action: 'DELETE_SERVICE', description: `Deleted ${type} service "${name}"` });
+    res.json({ success: true, message: `Service "${name}" deleted.`, data: result });
+  } catch (error) {
+    console.error('Error deleting service:', error);
+    res.status(500).json({ success: false, message: 'Failed to delete service.' });
   }
 };

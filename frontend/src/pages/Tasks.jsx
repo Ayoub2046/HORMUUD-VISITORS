@@ -1,15 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useTranslation } from 'react-i18next';
-
-const HORMUUD_SERVICES = [
-  'EVC Plus (Mobile Money)', 'WAAFI App (Fintech)', 'GSM Mobile Services (Voice & Calls)',
-  'Mobile Data (2G/3G/4G/5G)', 'ADSL Plus (Home Broadband)', 'FTTH (Fiber to the Home)',
-  'Hormuud Mifi (Portable WiFi)', 'Hormuud Hotspot (Public WiFi)', 'Enterprise Internet (Business)',
-  'My SMS (Bulk Messaging)', 'Fixed Line Services', 'International Roaming',
-  'International Calls', '5G Plus (LTE-A / LTE-Advanced)', 'EVC Plus Merchant Registration',
-  'Fibre Optic Connectivity', 'Corporate & Enterprise Plans', 'Hormuud Salaam Foundation (CSR)'
-];
+import ServiceSelect from '../components/ServiceSelect';
 
 export default function Tasks() {
   const { user, apiRequest } = useAuth();
@@ -135,10 +127,11 @@ export default function Tasks() {
               <div className="row g-3">
                 <div className="col-12 col-md-6">
                   <label className="form-label small fw-semibold text-body-secondary">Hormuud Service *</label>
-                  <select className="form-select" value={form.service} onChange={e => setForm({...form, service: e.target.value})} required>
-                    <option value="">Select a service</option>
-                    {HORMUUD_SERVICES.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <ServiceSelect
+                    value={form.service}
+                    onChange={(v) => setForm({ ...form, service: v })}
+                    admin={user.role === 'admin'}
+                  />
                 </div>
                 <div className="col-6 col-md-3">
                   <label className="form-label small fw-semibold text-body-secondary">Date *</label>

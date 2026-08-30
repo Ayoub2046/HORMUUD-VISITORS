@@ -1,15 +1,6 @@
 const db = require('../config/db');
 const ExcelJS = require('exceljs');
 
-const HORMUUD_SERVICES = [
-  'EVC Plus (Mobile Money)', 'WAAFI App (Fintech)', 'GSM Mobile Services (Voice & Calls)',
-  'Mobile Data (2G/3G/4G/5G)', 'ADSL Plus (Home Broadband)', 'FTTH (Fiber to the Home)',
-  'Hormuud Mifi (Portable WiFi)', 'Hormuud Hotspot (Public WiFi)', 'Enterprise Internet (Business)',
-  'My SMS (Bulk Messaging)', 'Fixed Line Services', 'International Roaming',
-  'International Calls', '5G Plus (LTE-A / LTE-Advanced)', 'EVC Plus Merchant Registration',
-  'Fibre Optic Connectivity', 'Corporate & Enterprise Plans', 'Hormuud Salaam Foundation (CSR)'
-];
-
 const PERIODS = ['daily', 'weekly', 'monthly', 'yearly'];
 
 const toDateStr = (d) => {
@@ -107,7 +98,12 @@ const autoComplete = async (targets, achievedById) => {
 };
 
 exports.getServices = async (req, res) => {
-  res.json({ success: true, data: HORMUUD_SERVICES });
+  try {
+    const [ent, ind] = await Promise.all([db.entSvcs.findMany(), db.indSvcs.findMany()]);
+    res.json({ success: true, data: [...ent, ...ind] });
+  } catch (error) {
+    res.status(500).json({ success: false, message: 'Failed to fetch services.' });
+  }
 };
 exports.getTargets = async (req, res) => {
   try {

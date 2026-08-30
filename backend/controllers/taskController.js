@@ -153,27 +153,11 @@ exports.deleteTask = async (req, res) => {
 };
 
 exports.getServices = async (req, res) => {
-  res.json({
-    success: true,
-    data: [
-      { id: 'evc-plus', name: 'EVC Plus (Mobile Money)' },
-      { id: 'waafi', name: 'WAAFI App (Fintech)' },
-      { id: 'gsm', name: 'GSM Mobile Services (Voice & Calls)' },
-      { id: 'mobile-data', name: 'Mobile Data (2G/3G/4G/5G)' },
-      { id: 'adsl-plus', name: 'ADSL Plus (Home Broadband)' },
-      { id: 'ftth', name: 'FTTH (Fiber to the Home)' },
-      { id: 'mifi', name: 'Hormuud Mifi (Portable WiFi)' },
-      { id: 'hotspot', name: 'Hormuud Hotspot (Public WiFi)' },
-      { id: 'enterprise-internet', name: 'Enterprise Internet (Business)' },
-      { id: 'my-sms', name: 'My SMS (Bulk Messaging)' },
-      { id: 'fixed-line', name: 'Fixed Line Services' },
-      { id: 'international-roaming', name: 'International Roaming' },
-      { id: 'international-calls', name: 'International Calls' },
-      { id: '5g-plus', name: '5G Plus (LTE-A / LTE-Advanced)' },
-      { id: 'evc-merchant', name: 'EVC Plus Merchant Registration' },
-      { id: 'fibre-optics', name: 'Fibre Optic Connectivity' },
-      { id: 'corporate-plans', name: 'Corporate & Enterprise Plans' },
-      { id: 'salaam-foundation', name: 'Hormuud Salaam Foundation (CSR)' }
-    ]
-  });
+  try {
+    const [ent, ind] = await Promise.all([db.entSvcs.findMany(), db.indSvcs.findMany()]);
+    res.json({ success: true, data: [...ent, ...ind] });
+  } catch (error) {
+    console.error('Error fetching services:', error);
+    res.status(500).json({ success: false, message: 'Failed to fetch services.' });
+  }
 };

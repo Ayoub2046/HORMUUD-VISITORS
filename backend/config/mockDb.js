@@ -383,6 +383,11 @@ function createMockDb() {
         if (!v || store.entSvcs.includes(v)) return null;
         store.entSvcs.push(v);
         return v;
+      },
+      delete: async (name) => {
+        const idx = store.entSvcs.indexOf(name);
+        if (idx === -1) return null;
+        return store.entSvcs.splice(idx, 1)[0];
       }
     },
 
@@ -393,6 +398,11 @@ function createMockDb() {
         if (!v || store.indSvcs.includes(v)) return null;
         store.indSvcs.push(v);
         return v;
+      },
+      delete: async (name) => {
+        const idx = store.indSvcs.indexOf(name);
+        if (idx === -1) return null;
+        return store.indSvcs.splice(idx, 1)[0];
       }
     },
 

@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../utils/api';
+import ServiceSelect from '../components/ServiceSelect';
 
 const PERIODS = [
   { value: 'daily', label: 'Daily' },
@@ -223,10 +224,12 @@ export default function TargetTasks() {
               <div className="row g-3">
                 <div className="col-12 col-md-6">
                   <label className="form-label small fw-semibold text-body-secondary">Hormuud Service *</label>
-                  <select className="form-select" value={form.service} onChange={e => setForm({...form, service: e.target.value})} required>
-                    <option value="">Select a service</option>
-                    {services.map(s => <option key={s} value={s}>{s}</option>)}
-                  </select>
+                  <ServiceSelect
+                    value={form.service}
+                    onChange={(v) => setForm({ ...form, service: v })}
+                    onListChange={(list) => setServices(list)}
+                    admin={user.role === 'admin'}
+                  />
                 </div>
                 <div className="col-6 col-md-3">
                   <label className="form-label small fw-semibold text-body-secondary">Target Quantity (clients) *</label>
